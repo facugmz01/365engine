@@ -22,10 +22,33 @@ const PREDEFINED_ENDPOINTS: Record<string, string[]> = {
     "security/cases/edr/alerts",
     "security/alerts"
   ],
-  exchange: [],
-  purview: [],
-  teams: [],
-  sharepoint: []
+  exchange: [
+    "admin/exchange/mailboxPolicies",
+    "admin/exchange/mailboxSettings",
+    "admin/serviceAnnouncement/messages",
+    "policies/activityBasedTimeoutPolicies",
+    "policies/permissionGrantPolicies"
+  ],
+  purview: [
+    "security/informationProtection/sensitivityLabels",
+    "security/informationProtection/labelPolicies",
+    "solutions/informationProtection/sensitivityLabels",
+    "policies/informationProtection/bitlockerRecoveryKey",
+    "compliance/ediscovery/cases"
+  ],
+  teams: [
+    "teamwork/teamsAppSettings",
+    "communications/callRecords",
+    "teams",
+    "teamwork/devices",
+    "teamwork/teamsAppSettings"
+  ],
+  sharepoint: [
+    "admin/sharepoint/settings",
+    "sites",
+    "sites/root",
+    "groups?$filter=groupTypes/any(c:c+eq+'Unified')"
+  ]
 };
 
 export default function Import() {
