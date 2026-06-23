@@ -139,21 +139,15 @@ export default function Deployments() {
   };
 
   // ── Template filtering ──
-  const CATEGORIES: Record<string, string[]> = {
-    intune: ['deviceManagement', 'deviceAppManagement'],
-    entra: ['identity', 'directory', 'policies'],
-    defender: ['security'],
-    exchange: ['admin/exchange'],
-    teams: ['teamwork', 'communications'],
-    purview: ['compliance', 'solutions'],
-  };
-
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name?.toLowerCase().includes(templateSearch.toLowerCase()) ||
-      t.endpoint?.toLowerCase().includes(templateSearch.toLowerCase());
+      t.endpoint?.toLowerCase().includes(templateSearch.toLowerCase()) ||
+      t.category?.toLowerCase().includes(templateSearch.toLowerCase());
     if (categoryFilter === 'all') return matchesSearch;
-    const cats = CATEGORIES[categoryFilter] || [];
-    return matchesSearch && cats.some(c => t.endpoint?.startsWith(c));
+    return matchesSearch && (
+      t.category?.toLowerCase() === categoryFilter ||
+      t.endpoint?.toLowerCase().includes(categoryFilter)
+    );
   });
 
   const toggleTemplate = (id: string) => {
