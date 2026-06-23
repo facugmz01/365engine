@@ -73,11 +73,15 @@ npm run build
 cd ..
 
 echo "Levantando servicios de Docker..."
-sudo docker-compose up -d --build
+if sudo docker compose version &> /dev/null; then
+    sudo docker compose up -d --build
+else
+    sudo docker-compose up -d --build
+fi
 
 echo -e "\n======================================================="
 echo "¡Despliegue Completado Exitosamente!"
 echo "======================================================="
 echo "La aplicación NEXUS ya debería estar ejecutándose en los contenedores."
-echo "Puedes comprobar el estado con: sudo docker-compose ps"
-echo "Para ver los logs en tiempo real: sudo docker-compose logs -f"
+echo "Puedes comprobar el estado con: sudo docker compose ps (o sudo docker-compose ps)"
+echo "Para ver los logs en tiempo real: sudo docker compose logs -f (o sudo docker-compose logs -f)"

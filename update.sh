@@ -23,7 +23,11 @@ cd ..
 # 3. Reconstruir y reiniciar los contenedores Docker
 echo "[3/3] Reconstruyendo imágenes y reiniciando contenedores..."
 # Usamos --build para asegurar que cualquier cambio en dependencias (requirements.txt) se aplique
-sudo docker-compose up -d --build
+if sudo docker compose version &> /dev/null; then
+    sudo docker compose up -d --build
+else
+    sudo docker-compose up -d --build
+fi
 
 # Limpieza de imágenes huérfanas o viejas para no llenar el disco del servidor (Opcional pero recomendado)
 echo "Limpiando imágenes antiguas de Docker para liberar espacio..."
@@ -33,4 +37,4 @@ echo -e "\n======================================================="
 echo "¡Actualización Completada Exitosamente!"
 echo "======================================================="
 echo "Los contenedores se han reiniciado con el nuevo código."
-echo "Puedes comprobar el estado con: sudo docker-compose ps"
+echo "Puedes comprobar el estado con: sudo docker compose ps (o sudo docker-compose ps)"
