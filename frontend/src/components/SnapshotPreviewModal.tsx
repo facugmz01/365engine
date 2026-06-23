@@ -54,14 +54,16 @@ export default function SnapshotPreviewModal({ isOpen, onClose, data, title = "V
       else if (['sensitivitylabels', 'informationprotection'].some(x => endpoint_lower.includes(x))) category = 'purview';
       else if (endpoint_lower.includes('sites')) category = 'sharepoint';
 
-      let sanitized_payload;
+      let sanitized_payload: Record<string, any>;
       if (sourceMode === 'live' && raw_res.payload) {
         // Live preview already extracts the clean payload inside the "payload" key
         sanitized_payload = { ...raw_res.payload };
       } else {
         // TCM preview has a flat structure
         sanitized_payload = { ...raw_res };
-        ['id', 'version', 'createdDateTime', 'lastModifiedDateTime', '@odata.context', '@odata.nextLink', 'resourceType', 'endpoint'].forEach(k => delete sanitized_payload[k]);
+        ['id', 'version', 'createdDateTime', 'lastModifiedDateTime', '@odata.context', '@odata.nextLink', 'resourceType', 'endpoint'].forEach(k => {
+          delete sanitized_payload[k];
+        });
       }
 
       try {
