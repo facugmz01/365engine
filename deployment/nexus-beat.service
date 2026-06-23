@@ -8,7 +8,7 @@ User=root
 Group=www-data
 WorkingDirectory=/opt/nexus
 Environment="PATH=/opt/nexus/.venv/bin"
-EnvironmentFile=/opt/nexus/.env
+EnvironmentFile=-/opt/nexus/.env
 ExecStart=/opt/nexus/.venv/bin/celery -A app.tasks beat --loglevel=info
 
 Restart=always
