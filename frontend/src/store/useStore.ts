@@ -26,6 +26,7 @@ export interface Template {
   description: string;
   category: string;
   endpoint: string;
+  payload: Record<string, any>;
   created_at: string;
 }
 
