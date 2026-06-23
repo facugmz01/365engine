@@ -5,33 +5,13 @@ logger = logging.getLogger(__name__)
 
 WORKLOAD_TO_RESOURCES = {
     "entra": [
-        "microsoft.aad.conditionalaccesspolicy",
-        "microsoft.aad.namedlocation",
-        "microsoft.aad.administrativeunit"
+        "microsoft.aad.conditionalaccesspolicy"
     ],
     "intune": [
-        "microsoft.intune.deviceconfiguration",
-        "microsoft.intune.devicecompliancepolicy",
-        "microsoft.intune.managedapppolicy",
-        "microsoft.intune.accountprotectionlocalusergroupmembershippolicy"
+        "microsoft.intune.deviceconfiguration"
     ],
     "exchange": [
-        "microsoft.exchange.sharedmailbox",
-        "microsoft.exchange.transportrule",
         "microsoft.exchange.accepteddomain"
-    ],
-    "defender": [
-        "microsoft.defender.antiphishingpolicy",
-        "microsoft.defender.safelinkspolicy",
-        "microsoft.defender.safeattachmentpolicy"
-    ],
-    "purview": [
-        "microsoft.purview.dlppolicy",
-        "microsoft.purview.sensitivitylabel"
-    ],
-    "teams": [
-        "microsoft.teams.apppermissionpolicy",
-        "microsoft.teams.callingpolicy"
     ]
 }
 
