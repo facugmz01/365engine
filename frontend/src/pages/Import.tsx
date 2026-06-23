@@ -4,6 +4,28 @@ import { apiClient } from '../api/client';
 import { useStore } from '../store/useStore';
 import SnapshotPreviewModal from '../components/SnapshotPreviewModal';
 
+const PREDEFINED_ENDPOINTS: Record<string, string[]> = {
+  intune: [
+    "deviceManagement/deviceConfigurations",
+    "deviceManagement/deviceCompliancePolicies",
+    "deviceAppManagement/managedAppPolicies"
+  ],
+  entra: [
+    "identity/conditionalAccess/policies",
+    "identity/conditionalAccess/namedLocations",
+    "policies/authenticationMethodsPolicy/authenticationMethodConfigurations",
+    "directory/administrativeUnits"
+  ],
+  defender: [
+    "security/cases/edr/alerts",
+    "security/alerts"
+  ],
+  exchange: [],
+  purview: [],
+  teams: [],
+  sharepoint: []
+};
+
 export default function Import() {
   const [importMode, setImportMode] = useState<'live' | 'tcm' | 'backup'>('live');
   const [isImporting, setIsImporting] = useState(false);
@@ -12,8 +34,9 @@ export default function Import() {
 
   // Live tenant import (from a live tenant via Graph API)
   const [liveOrgId, setLiveOrgId] = useState('');
-  const [liveEndpoint, setLiveEndpoint] = useState('deviceManagement/configurationPolicies');
+  const [liveEndpoint, setLiveEndpoint] = useState('');
   const [liveCategory, setLiveCategory] = useState('intune');
+  const [importAllEndpoints, setImportAllEndpoints] = useState(false);
 
   // TCM snapshot import
   const [tcmOrgId, setTcmOrgId] = useState('');
@@ -26,24 +49,47 @@ export default function Import() {
   const addLog = (msg: string) => setImportLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const handleLiveImport = async () => {
-    if (!liveOrgId || !liveEndpoint) {
-      alert('Selecciona un inquilino y especifica el endpoint.');
+    if (!liveOrgId) {
+      alert('Selecciona un inquilino.');
+      return;
+    }
+    if (!importAllEndpoints && !liveEndpoint) {
+      alert('Especifica el endpoint o marca la opción de importar todos.');
       return;
     }
     setIsImporting(true);
     addLog('Iniciando importación desde inquilino activo...');
     try {
-      // Backend: POST /api/v1/templates/import
-      const response = await apiClient.post('/templates/import', {
-        organization_id: liveOrgId,
-        endpoint: liveEndpoint,
-        category: liveCategory,
-      });
-      addLog(`✓ ${response.data.message}`);
-      addLog(`  Organización: ${response.data.organization_name}`);
-      addLog(`  Endpoint: ${response.data.endpoint}`);
+      if (importAllEndpoints) {
+        const endpointsToFetch = PREDEFINED_ENDPOINTS[liveCategory] || [];
+        if (endpointsToFetch.length === 0) {
+          addLog(`⚠ No hay endpoints predefinidos configurados para la categoría ${liveCategory}.`);
+        }
+        for (const ep of endpointsToFetch) {
+          try {
+            const response = await apiClient.post('/templates/import', {
+              organization_id: liveOrgId,
+              endpoint: ep,
+              category: liveCategory,
+            });
+            addLog(`✓ ${ep}: ${response.data.message}`);
+          } catch (epError: any) {
+             addLog(`✗ Error en ${ep}: ${epError.response?.data?.detail || epError.message}`);
+          }
+        }
+        addLog('Importación masiva completada.');
+      } else {
+        const response = await apiClient.post('/templates/import', {
+          organization_id: liveOrgId,
+          endpoint: liveEndpoint,
+          category: liveCategory,
+        });
+        addLog(`✓ ${response.data.message}`);
+        addLog(`  Organización: ${response.data.organization_name}`);
+        addLog(`  Endpoint: ${response.data.endpoint}`);
+      }
     } catch (error: any) {
-      addLog(`✗ Error: ${error.response?.data?.detail || error.message}`);
+      addLog(`✗ Error general: ${error.response?.data?.detail || error.message}`);
     } finally {
       setIsImporting(false);
     }
@@ -161,11 +207,30 @@ export default function Import() {
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">Graph API Endpoint</label>
                     <input
                       type="text"
+                      list="endpoints-list"
                       value={liveEndpoint}
                       onChange={(e) => setLiveEndpoint(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-bg-deep border border-border-color rounded-lg text-text-primary focus:ring-1 focus:ring-accent-blue outline-none font-mono text-sm"
-                      placeholder="deviceManagement/configurationPolicies"
+                      disabled={importAllEndpoints}
+                      className="w-full px-4 py-2.5 bg-bg-deep border border-border-color rounded-lg text-text-primary focus:ring-1 focus:ring-accent-blue outline-none font-mono text-sm disabled:opacity-50"
+                      placeholder={importAllEndpoints ? "Se importarán todos los endpoints predefinidos" : "Ej: deviceManagement/configurationPolicies"}
                     />
+                    <datalist id="endpoints-list">
+                      {PREDEFINED_ENDPOINTS[liveCategory]?.map(ep => (
+                        <option key={ep} value={ep} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 mb-2">
+                    <input 
+                      type="checkbox" 
+                      id="importAll" 
+                      checked={importAllEndpoints}
+                      onChange={(e) => setImportAllEndpoints(e.target.checked)}
+                      className="rounded border-border-color bg-bg-deep text-accent-blue focus:ring-accent-blue"
+                    />
+                    <label htmlFor="importAll" className="text-sm text-text-secondary cursor-pointer">
+                      Importar todos los endpoints comunes de esta categoría
+                    </label>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">Categoría</label>
