@@ -1,0 +1,18 @@
+[Unit]
+Description=Celery Worker for NEXUS
+After=network.target redis-server.service mysql.service
+
+[Service]
+Type=simple
+User=root
+Group=www-data
+WorkingDirectory=/opt/nexus
+Environment="PATH=/opt/nexus/.venv/bin"
+EnvironmentFile=/opt/nexus/.env
+ExecStart=/opt/nexus/.venv/bin/celery -A app.tasks worker --loglevel=info
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

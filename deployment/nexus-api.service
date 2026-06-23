@@ -1,0 +1,18 @@
+[Unit]
+Description=Gunicorn daemon for NEXUS FastAPI backend
+After=network.target mysql.service redis-server.service
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/opt/nexus
+Environment="PATH=/opt/nexus/.venv/bin"
+EnvironmentFile=/opt/nexus/.env
+ExecStart=/opt/nexus/.venv/bin/gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 127.0.0.1:8000
+
+# Restart settings
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
