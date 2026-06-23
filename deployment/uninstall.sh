@@ -18,7 +18,7 @@ echo "WARNING: This will completely remove NEXUS, including the MySQL database '
 echo "Are you sure you want to proceed? (Type 'YES' to continue)"
 read -r CONFIRM
 
-if [ "$CONFIRM" != "YES" ]; then
+if [[ ! "$CONFIRM" =~ ^[Yy]([Ee][Ss])?$ ]]; then
     echo "Uninstallation cancelled."
     exit 0
 fi
