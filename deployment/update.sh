@@ -23,7 +23,8 @@ echo "============================================"
 # 1. Pull latest code from GitHub
 echo ""
 echo "[1/4] Descargando últimos cambios desde GitHub..."
-git pull origin main
+git fetch origin
+git reset --hard origin/main
 echo "✓ Código actualizado."
 
 # 2. Install any new Python dependencies
