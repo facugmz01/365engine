@@ -1094,6 +1094,61 @@ async def reject_deployment(
 
     return {"job_id": str(job.id), "status": job.status, "message": "Deployment rejected."}
 
+
+@app.get(
+    "/api/v1/organizations/{org_id}/groups",
+    tags=["Organizations"],
+    dependencies=[Depends(require_role([UserRole.DEPLOYER, UserRole.SUPER_ADMIN, UserRole.APPROVER]))]
+)
+async def list_tenant_groups(
+    org_id: uuid.UUID,
+    search: str = "",
+    db: AsyncSession = Depends(get_db_session)
+) -> dict:
+    """
+    Lists Entra ID security groups from the target tenant via Microsoft Graph API.
+    Supports optional search by displayName.
+    """
+    from app.services.auth_agent import auth_agent
+    from app.services.graph_agent import GraphAPIClient
+
+    stmt = select(Organization).where(Organization.id == org_id).options(selectinload(Organization.credentials))
+    result = await db.execute(stmt)
+    org = result.scalar_one_or_none()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if not org.credentials:
+        raise HTTPException(status_code=400, detail="Organization has no credentials configured")
+
+    cred = org.credentials[0]
+    try:
+        if cred.auth_type == "delegated":
+            if not cred.refresh_token:
+                raise HTTPException(status_code=400, detail="No refresh token for delegated auth")
+            from app.services.auth_agent import auth_agent as _aa
+            access_token = await _aa.get_delegated_access_token(cred.refresh_token, cred.client_id, cred.client_secret, org.tenant_id)
+        else:
+            access_token = await auth_agent.get_access_token(org.tenant_id, cred.client_id, cred.client_secret)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Authentication failed: {e}")
+
+    client = GraphAPIClient(access_token=access_token)
+
+    try:
+        filter_query = ""
+        if search:
+            filter_query = f"?$filter=startswith(displayName,'{search}')&$top=50"
+        else:
+            filter_query = "?$top=100&$select=id,displayName,groupTypes,membershipRule,securityEnabled,mailEnabled"
+
+        response = await client._request_with_retry("GET", f"groups{filter_query}")
+        response.raise_for_status()
+        data = response.json()
+        groups = data.get("value", [])
+        return {"groups": groups, "total": len(groups)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch groups: {e}")
+
 @app.post(
     "/api/v1/organizations/{org_id}/drift-scan",
     tags=["Organizations"],

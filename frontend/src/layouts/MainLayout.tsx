@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
-import { Building2, LayoutDashboard, History, Settings, LogOut, Users, FileText, Package, Briefcase, Download, Shield } from 'lucide-react';
+import { Building2, LayoutDashboard, History, Settings, LogOut, Users, FileText, Package, Briefcase, Download, Shield, Rocket } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 export default function MainLayout() {
@@ -36,6 +36,7 @@ export default function MainLayout() {
     { name: 'Auditoría', path: '/audit', icon: History },
     { name: 'Usuarios', path: '/users', icon: Users },
     { name: 'Importar', path: '/import', icon: Download },
+    { name: 'Despliegue', path: '/deployments', icon: Rocket },
     { name: 'Zero Trust', path: '/assessment', icon: Shield },
     { name: 'Ajustes', path: '/settings', icon: Settings },
   ];

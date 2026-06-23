@@ -12,6 +12,7 @@ import Users from './pages/Users';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import Assessment from './pages/Assessment';
+import Deployments from './pages/Deployments';
 import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="users" element={<Users />} />
           <Route path="import" element={<Import />} />
           <Route path="assessment" element={<Assessment />} />
+          <Route path="deployments" element={<Deployments />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
