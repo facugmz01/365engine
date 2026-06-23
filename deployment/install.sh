@@ -40,13 +40,23 @@ mysql -e "FLUSH PRIVILEGES;"
 
 # 4. Prepare Application Directory
 echo "[4/7] Preparing Application Directory..."
-if [ "$CURRENT_DIR" != "$PROJECT_DIR" ]; then
-    echo "Copying files to $PROJECT_DIR..."
-    mkdir -p $PROJECT_DIR
-    cp -r $CURRENT_DIR/* $PROJECT_DIR/
+if [ -d "$PROJECT_DIR" ]; then
+    echo "Limpiando directorio antiguo $PROJECT_DIR..."
+    rm -rf "$PROJECT_DIR"
 fi
 
-cd $PROJECT_DIR
+echo "Por favor, ingresa la URL de tu repositorio de GitHub (ej. https://github.com/usuario/repo.git):"
+read -r REPO_URL
+
+if [ -z "$REPO_URL" ]; then
+    echo "URL no ingresada. Abortando instalación."
+    exit 1
+fi
+
+echo "Clonando repositorio..."
+git clone "$REPO_URL" "$PROJECT_DIR"
+
+cd "$PROJECT_DIR"
 
 # 5. Setup Python Virtual Environment and Backend
 echo "[5/7] Setting up Python Backend..."
