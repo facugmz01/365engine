@@ -3,16 +3,62 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+WORKLOAD_TO_RESOURCES = {
+    "entra": [
+        "microsoft.aad.conditionalaccesspolicy",
+        "microsoft.aad.namedlocation",
+        "microsoft.aad.administrativeunit"
+    ],
+    "intune": [
+        "microsoft.intune.deviceconfiguration",
+        "microsoft.intune.devicecompliancepolicy",
+        "microsoft.intune.managedapppolicy",
+        "microsoft.intune.accountprotectionlocalusergroupmembershippolicy"
+    ],
+    "exchange": [
+        "microsoft.exchange.sharedmailbox",
+        "microsoft.exchange.transportrule",
+        "microsoft.exchange.accepteddomain"
+    ],
+    "defender": [
+        "microsoft.defender.antiphishingpolicy",
+        "microsoft.defender.safelinkspolicy",
+        "microsoft.defender.safeattachmentpolicy"
+    ],
+    "purview": [
+        "microsoft.purview.dlppolicy",
+        "microsoft.purview.sensitivitylabel"
+    ],
+    "teams": [
+        "microsoft.teams.apppermissionpolicy",
+        "microsoft.teams.callingpolicy"
+    ]
+}
+
 async def fetch_tcm_snapshot(client, workloads: list[str]) -> list[dict]:
     """
     Creates a TCM Snapshot Job for the specified workloads, polls until it completes,
     and returns the raw snapshot data.
     """
+    # Map generic workloads to specific Microsoft Graph UTCM resource types
+    mapped_resources = []
+    for w in workloads:
+        key = w.lower().strip()
+        if key in WORKLOAD_TO_RESOURCES:
+            mapped_resources.extend(WORKLOAD_TO_RESOURCES[key])
+        elif key.startswith("microsoft."):
+            # Allow direct resource namespaces
+            mapped_resources.append(key)
+    
+    # If no valid mapping found, default to a safe known resource to avoid HTTP 400
+    if not mapped_resources:
+        mapped_resources = ["microsoft.aad.conditionalaccesspolicy"]
+        
     endpoint = "https://graph.microsoft.com/beta/admin/configurationManagement/configurationSnapshots/createSnapshot"
     payload = {
         "displayName": "NEXUS Automated TCM Snapshot",
         "description": "Triggered by NEXUS engine",
-        "resources": workloads
+        "resources": list(set(mapped_resources))
     }
     
     logger.info(f"Creating TCM snapshot job for workloads: {workloads}...")
