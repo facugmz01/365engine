@@ -8,9 +8,11 @@ async def fetch_tcm_snapshot(client, workloads: list[str]) -> list[dict]:
     Creates a TCM Snapshot Job for the specified workloads, polls until it completes,
     and returns the raw snapshot data.
     """
-    endpoint = "https://graph.microsoft.com/beta/admin/configurationManagement/configurationSnapshotJobs"
+    endpoint = "https://graph.microsoft.com/beta/admin/configurationManagement/configurationSnapshots/createSnapshot"
     payload = {
-        "workloads": workloads
+        "displayName": "NEXUS Automated TCM Snapshot",
+        "description": "Triggered by NEXUS engine",
+        "resources": workloads
     }
     
     logger.info(f"Creating TCM snapshot job for workloads: {workloads}...")
