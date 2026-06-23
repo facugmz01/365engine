@@ -47,16 +47,18 @@ function StatusBadge({ status }: { status: string }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function Deployments() {
-  const { organizations, fetchOrganizations, templates, fetchTemplates, jobs, fetchJobs } = useStore();
+  const { organizations, fetchOrganizations, templates, fetchTemplates, packages, fetchPackages, jobs, fetchJobs } = useStore();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Step 1 - Tenant
   const [selectedOrgId, setSelectedOrgId] = useState('');
 
-  // Step 2 - Templates
+  // Step 2 - Templates / Baselines
+  const [selectionMode, setSelectionMode] = useState<'templates' | 'baselines'>('templates');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [templateSearch, setTemplateSearch] = useState('');
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [selectedBaselineId, setSelectedBaselineId] = useState('');
 
   // Step 3 - Groups
   const [globalTarget, setGlobalTarget] = useState<'all_devices' | 'all_users' | 'custom_groups' | 'unassigned'>('unassigned');
@@ -85,6 +87,7 @@ export default function Deployments() {
   useEffect(() => {
     fetchOrganizations();
     fetchTemplates();
+    fetchPackages();
     fetchJobs();
   }, []);
 
@@ -152,6 +155,12 @@ export default function Deployments() {
 
   const toggleTemplate = (id: string) => {
     setSelectedTemplateIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const selectBaseline = (pkg: any) => {
+    setSelectedBaselineId(pkg.id);
+    const ids = (pkg.templates ?? []).map((t: any) => t.id);
+    setSelectedTemplateIds(ids);
   };
 
   const toggleGroup = (id: string) => {
@@ -303,48 +312,94 @@ export default function Deployments() {
             </div>
           )}
 
-          {/* ── STEP 2: Templates ── */}
+          {/* ── STEP 2: Templates / Baselines ── */}
           {step === 2 && (
             <div className="glass-panel p-6 flex-1 flex flex-col">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Filter size={18} className="text-accent-blue" /> Selecciona las Directivas</h2>
-              <div className="flex gap-3 mb-4">
-                <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                  <input value={templateSearch} onChange={e => setTemplateSearch(e.target.value)}
-                    placeholder="Buscar directiva..."
-                    className="w-full pl-9 pr-3 py-2 bg-bg-deep border border-border-color rounded-lg text-sm text-text-primary focus:ring-1 focus:ring-accent-blue outline-none" />
+
+              {/* Mode tabs */}
+              <div className="flex gap-1 p-1 bg-bg-deep rounded-lg border border-border-color mb-4 flex-shrink-0">
+                <button onClick={() => { setSelectionMode('templates'); setSelectedBaselineId(''); }}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${selectionMode === 'templates' ? 'bg-accent-blue text-white' : 'text-text-secondary hover:text-text-primary'}`}>
+                  Directivas Individuales
+                </button>
+                <button onClick={() => { setSelectionMode('baselines'); setSelectedTemplateIds([]); }}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${selectionMode === 'baselines' ? 'bg-accent-blue text-white' : 'text-text-secondary hover:text-text-primary'}`}>
+                  Baselines (Paquetes)
+                </button>
+              </div>
+
+              {/* ─ Individual Templates ─ */}
+              {selectionMode === 'templates' && (
+                <>
+                  <div className="flex gap-3 mb-4">
+                    <div className="relative flex-1">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                      <input value={templateSearch} onChange={e => setTemplateSearch(e.target.value)}
+                        placeholder="Buscar directiva..."
+                        className="w-full pl-9 pr-3 py-2 bg-bg-deep border border-border-color rounded-lg text-sm text-text-primary focus:ring-1 focus:ring-accent-blue outline-none" />
+                    </div>
+                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
+                      className="px-3 py-2 bg-bg-deep border border-border-color rounded-lg text-sm text-text-primary outline-none focus:ring-1 focus:ring-accent-blue">
+                      <option value="all">Todas</option>
+                      <option value="intune">Intune</option>
+                      <option value="entra">Entra ID</option>
+                      <option value="defender">Defender</option>
+                      <option value="exchange">Exchange</option>
+                      <option value="teams">Teams</option>
+                      <option value="purview">Purview</option>
+                    </select>
+                  </div>
+                  <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
+                    {filteredTemplates.length === 0 ? (
+                      <div className="text-center py-12 text-text-muted text-sm">No hay directivas que coincidan.</div>
+                    ) : filteredTemplates.map(t => {
+                      const selected = selectedTemplateIds.includes(t.id);
+                      return (
+                        <button key={t.id} onClick={() => toggleTemplate(t.id)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left
+                            ${selected ? 'border-accent-blue/50 bg-accent-blue/5' : 'border-border-color bg-bg-card hover:bg-bg-panel'}`}>
+                          <div>
+                            <div className={`text-sm font-medium ${selected ? 'text-accent-blue' : 'text-text-primary'}`}>{t.name}</div>
+                            <div className="text-xs text-text-muted font-mono">{t.endpoint}</div>
+                          </div>
+                          {selected && <CheckCircle2 size={16} className="text-accent-blue flex-shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* ─ Baselines ─ */}
+              {selectionMode === 'baselines' && (
+                <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+                  {packages.length === 0 ? (
+                    <div className="text-center py-12 text-text-muted text-sm">No hay baselines creados todavía.</div>
+                  ) : packages.map((pkg: any) => {
+                    const selected = selectedBaselineId === pkg.id;
+                    return (
+                      <button key={pkg.id} onClick={() => selectBaseline(pkg)}
+                        className={`w-full flex items-start justify-between p-4 rounded-xl border transition-all text-left
+                          ${selected ? 'border-accent-blue bg-accent-blue/5 shadow-[0_0_10px_rgba(59,130,246,0.1)]' : 'border-border-color bg-bg-card hover:bg-bg-panel'}`}>
+                        <div>
+                          <div className={`font-medium text-sm ${selected ? 'text-accent-blue' : 'text-text-primary'}`}>{pkg.name}</div>
+                          <div className="text-xs text-text-muted mt-0.5">{pkg.description || 'Sin descripción'}</div>
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {(pkg.templates ?? []).map((t: any) => (
+                              <span key={t.id} className="text-xs bg-bg-deep border border-border-color px-1.5 py-0.5 rounded text-text-secondary">{t.name}</span>
+                            ))}
+                          </div>
+                        </div>
+                        {selected && <CheckCircle2 size={18} className="text-accent-blue flex-shrink-0 mt-0.5" />}
+                      </button>
+                    );
+                  })}
                 </div>
-                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
-                  className="px-3 py-2 bg-bg-deep border border-border-color rounded-lg text-sm text-text-primary outline-none focus:ring-1 focus:ring-accent-blue">
-                  <option value="all">Todas</option>
-                  <option value="intune">Intune</option>
-                  <option value="entra">Entra ID</option>
-                  <option value="defender">Defender</option>
-                  <option value="exchange">Exchange</option>
-                  <option value="teams">Teams</option>
-                  <option value="purview">Purview</option>
-                </select>
-              </div>
-              <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
-                {filteredTemplates.length === 0 ? (
-                  <div className="text-center py-12 text-text-muted text-sm">No hay directivas que coincidan.</div>
-                ) : filteredTemplates.map(t => {
-                  const selected = selectedTemplateIds.includes(t.id);
-                  return (
-                    <button key={t.id} onClick={() => toggleTemplate(t.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left
-                        ${selected ? 'border-accent-blue/50 bg-accent-blue/5' : 'border-border-color bg-bg-card hover:bg-bg-panel'}`}>
-                      <div>
-                        <div className={`text-sm font-medium ${selected ? 'text-accent-blue' : 'text-text-primary'}`}>{t.name}</div>
-                        <div className="text-xs text-text-muted font-mono">{t.endpoint}</div>
-                      </div>
-                      {selected && <CheckCircle2 size={16} className="text-accent-blue flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
+              )}
+
               <div className="flex justify-between items-center mt-4 flex-shrink-0">
-                <span className="text-xs text-text-muted">{selectedTemplateIds.length} seleccionada(s)</span>
+                <span className="text-xs text-text-muted">{selectedTemplateIds.length} directiva(s) seleccionada(s)</span>
                 <div className="flex gap-3">
                   <button onClick={() => setStep(1)} className="flex items-center gap-2 px-4 py-2 border border-border-color rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
                     <ChevronLeft size={16} /> Atrás
