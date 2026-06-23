@@ -184,3 +184,41 @@ class GraphAPIClient:
             return response.json()
         except ValueError:
             return {"raw_response": response.text}
+
+    async def enrich_policy_payload(self, endpoint: str, policy: Dict[str, Any]) -> None:
+        """
+        Enriches a policy dictionary with its sub-resources if the Microsoft Graph API 
+        list endpoint omits them. Modifies the policy dict in-place.
+        """
+        policy_id = policy.get("id")
+        if not policy_id:
+            return
+            
+        endpoint_lower = endpoint.lower()
+        
+        # 1. Settings Catalog
+        if "devicemanagement/configurationpolicies" in endpoint_lower:
+            try:
+                settings_data = await self.get_resource(f"deviceManagement/configurationPolicies/{policy_id}/settings")
+                if isinstance(settings_data, dict) and "value" in settings_data:
+                    policy["settings"] = settings_data["value"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch settings for configuration policy {policy_id}: {e}")
+                
+        # 2. ADMX Group Policy Configurations
+        elif "devicemanagement/grouppolicyconfigurations" in endpoint_lower:
+            try:
+                def_values_data = await self.get_resource(f"deviceManagement/groupPolicyConfigurations/{policy_id}/definitionValues?$expand=definition")
+                if isinstance(def_values_data, dict) and "value" in def_values_data:
+                    policy["definitionValues"] = def_values_data["value"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch definitionValues for ADMX policy {policy_id}: {e}")
+                
+        # 3. Compliance Policies Scheduled Actions
+        elif "devicemanagement/devicecompliancepolicies" in endpoint_lower:
+            try:
+                actions_data = await self.get_resource(f"deviceManagement/deviceCompliancePolicies/{policy_id}/scheduledActionsForRule?$expand=scheduledActionConfigurations")
+                if isinstance(actions_data, dict) and "value" in actions_data:
+                    policy["scheduledActionsForRule"] = actions_data["value"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch scheduled actions for compliance policy {policy_id}: {e}")

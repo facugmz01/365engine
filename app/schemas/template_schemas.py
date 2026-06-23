@@ -54,6 +54,11 @@ class TemplateImportRequest(BaseModel):
     )
 
 
+class TemplatePreviewRequest(BaseModel):
+    organization_id: uuid.UUID = Field(..., description="ID of the Organization")
+    endpoints: list[str] = Field(..., description="List of Microsoft Graph endpoints to preview")
+
+
 class TCMImportRequest(BaseModel):
     """
     Request validation schema for initiating a bulk import via TCM configurationSnapshotJobs.

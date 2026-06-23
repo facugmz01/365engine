@@ -6,9 +6,11 @@ import SnapshotPreviewModal from '../components/SnapshotPreviewModal';
 
 const PREDEFINED_ENDPOINTS: Record<string, string[]> = {
   intune: [
+    "deviceManagement/configurationPolicies",
     "deviceManagement/deviceConfigurations",
     "deviceManagement/deviceCompliancePolicies",
-    "deviceAppManagement/managedAppPolicies"
+    "deviceAppManagement/managedAppPolicies",
+    "deviceManagement/groupPolicyConfigurations"
   ],
   entra: [
     "identity/conditionalAccess/policies",
@@ -29,6 +31,7 @@ const PREDEFINED_ENDPOINTS: Record<string, string[]> = {
 export default function Import() {
   const [importMode, setImportMode] = useState<'live' | 'tcm' | 'backup'>('live');
   const [isImporting, setIsImporting] = useState(false);
+  const [isFetchingLivePreview, setIsFetchingLivePreview] = useState(false);
   const [importLog, setImportLog] = useState<string[]>([]);
   const { organizations, fetchOrganizations } = useStore();
 
@@ -47,6 +50,42 @@ export default function Import() {
   const [isFetchingPreview, setIsFetchingPreview] = useState(false);
 
   const addLog = (msg: string) => setImportLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+
+  const handleLivePreview = async () => {
+    if (!liveOrgId) {
+      alert('Selecciona un inquilino.');
+      return;
+    }
+    if (!importAllEndpoints && !liveEndpoint) {
+      alert('Especifica el endpoint o marca la opción de importar todos.');
+      return;
+    }
+    
+    setIsFetchingLivePreview(true);
+    addLog('Obteniendo vista previa de políticas en vivo...');
+    
+    try {
+      const endpointsToFetch = importAllEndpoints ? (PREDEFINED_ENDPOINTS[liveCategory] || []) : [liveEndpoint];
+      if (endpointsToFetch.length === 0) {
+         addLog(`⚠ No hay endpoints para previsualizar.`);
+         setIsFetchingLivePreview(false);
+         return;
+      }
+      
+      const response = await apiClient.post('/templates/preview', {
+        organization_id: liveOrgId,
+        endpoints: endpointsToFetch
+      });
+      
+      setPreviewData(response.data.data || []);
+      setIsPreviewMode(true);
+      addLog(`✓ Vista previa obtenida: ${response.data.data?.length || 0} políticas extraídas de ${endpointsToFetch.length} endpoint(s).`);
+    } catch (error: any) {
+      addLog(`✗ Error en vista previa: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setIsFetchingLivePreview(false);
+    }
+  };
 
   const handleLiveImport = async () => {
     if (!liveOrgId) {
@@ -248,14 +287,24 @@ export default function Import() {
                       <option value="teams">Teams</option>
                     </select>
                   </div>
-                  <button
-                    onClick={handleLiveImport}
-                    disabled={isImporting || !liveOrgId}
-                    className="btn btn-primary w-full py-2.5 bg-accent-blue hover:bg-accent-blue/90 text-white rounded-lg transition-colors font-medium text-sm flex justify-center items-center gap-2 disabled:opacity-50"
-                  >
-                    {isImporting ? <Activity size={18} className="animate-spin" /> : <UploadCloud size={18} />}
-                    {isImporting ? 'Importando...' : 'Iniciar Importación'}
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleLivePreview}
+                      disabled={isFetchingLivePreview || isImporting || !liveOrgId}
+                      className="btn w-full py-2.5 bg-bg-panel hover:bg-bg-card border border-border-color text-text-primary rounded-lg transition-colors font-medium text-sm flex justify-center items-center gap-2 disabled:opacity-50"
+                    >
+                      {isFetchingLivePreview ? <Activity size={18} className="animate-spin" /> : <Eye size={18} />}
+                      Vista Previa
+                    </button>
+                    <button
+                      onClick={handleLiveImport}
+                      disabled={isImporting || isFetchingLivePreview || !liveOrgId}
+                      className="btn btn-primary w-full py-2.5 bg-accent-blue hover:bg-accent-blue/90 text-white rounded-lg transition-colors font-medium text-sm flex justify-center items-center gap-2 disabled:opacity-50"
+                    >
+                      {isImporting ? <Activity size={18} className="animate-spin" /> : <UploadCloud size={18} />}
+                      {isImporting ? 'Importando...' : 'Iniciar Importación'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

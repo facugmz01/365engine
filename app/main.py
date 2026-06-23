@@ -1,7 +1,7 @@
 import uuid
 import secrets
 from typing import Dict, Any, List
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -17,7 +17,7 @@ from app.schemas import (
     AppCredentialCreate, AppCredentialRead,
     ConfigurationTemplateCreate, ConfigurationTemplateRead,
     DeploymentJobCreate, DeploymentJobRead,
-    TemplateImportRequest, TCMImportRequest,
+    TemplateImportRequest, TemplatePreviewRequest, TCMImportRequest,
     BaselinePackageCreate, BaselinePackageRead
 )
 from app.tasks import run_deployment_job, run_import_templates, run_rollback_job, run_tcm_snapshot_import
@@ -423,6 +423,33 @@ async def get_template(
     return template
 
 
+@app.delete(
+    "/api/v1/templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_current_user)],
+    tags=["Configuration Templates"]
+)
+async def delete_template(
+    template_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Deletes a configuration template from the database.
+    """
+    stmt = select(ConfigurationTemplate).where(ConfigurationTemplate.id == template_id)
+    result = await db.execute(stmt)
+    template = result.scalar_one_or_none()
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Configuration template with ID '{template_id}' not found."
+        )
+    
+    await db.delete(template)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @app.post(
     "/api/v1/templates/import",
     status_code=status.HTTP_202_ACCEPTED,
@@ -481,6 +508,76 @@ async def import_templates(
             "category": payload.category
         }
     )
+
+@app.post(
+    "/api/v1/templates/preview",
+    response_model=dict,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_current_user)],
+    tags=["Configuration Templates"]
+)
+async def preview_templates(
+    payload: TemplatePreviewRequest,
+    db: AsyncSession = Depends(get_db_session)
+) -> dict:
+    """
+    Synchronously fetches configuration policies from target endpoints, enriches them with
+    sub-resources, and returns the payload data without saving to the database.
+    """
+    from app.services import auth_agent, GraphAPIClient
+    
+    stmt = select(Organization).where(Organization.id == payload.organization_id).options(selectinload(Organization.credentials))
+    result = await db.execute(stmt)
+    org = result.scalar_one_or_none()
+    
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found.")
+    if not org.credentials:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization has no credentials.")
+        
+    try:
+        cred = org.credentials[0]
+        access_token = await auth_agent.get_access_token(
+            tenant_id=org.tenant_id,
+            client_id=cred.client_id,
+            client_secret=cred.client_secret
+        )
+        client = GraphAPIClient(access_token=access_token)
+        
+        all_preview_items = []
+        
+        for ep in payload.endpoints:
+            if not ep.strip():
+                continue
+            try:
+                response_data = await client.get_resource(endpoint=ep)
+                if isinstance(response_data, dict) and "value" in response_data and isinstance(response_data["value"], list):
+                    raw_policies = response_data["value"]
+                else:
+                    raw_policies = [response_data] if response_data else []
+                
+                for idx, raw_policy in enumerate(raw_policies):
+                    sanitized_payload = dict(raw_policy)
+                    await client.enrich_policy_payload(ep, sanitized_payload)
+                    
+                    read_only_keys = ["id", "version", "createdDateTime", "lastModifiedDateTime", "@odata.context", "@odata.nextLink", "_assignments", "_metadata"]
+                    for k in read_only_keys:
+                        sanitized_payload.pop(k, None)
+                        
+                    all_preview_items.append({
+                        "name": raw_policy.get("name") or raw_policy.get("displayName") or f"Policy from {ep} ({idx})",
+                        "description": raw_policy.get("description") or "",
+                        "endpoint": ep,
+                        "payload": sanitized_payload
+                    })
+            except Exception as ep_err:
+                # Log and ignore specific endpoint errors so we can preview the rest
+                print(f"Error fetching preview for endpoint {ep}: {ep_err}")
+                
+        return {"data": all_preview_items}
+        
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Preview failed: {str(e)}")
 
 @app.post(
     "/api/v1/snapshots/fetch",

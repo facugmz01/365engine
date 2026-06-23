@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import type { Template } from '../store/useStore';
-import { FileText, Plus, Search, MoreVertical, Code } from 'lucide-react';
+import { FileText, Plus, Search, Eye, Download, Trash2, Code } from 'lucide-react';
 import CreateTemplateModal from '../components/CreateTemplateModal';
+import TemplateDetailsModal from '../components/TemplateDetailsModal';
 
 export default function Templates() {
-  const { templates, fetchTemplates, isLoading, error } = useStore();
+  const { templates, fetchTemplates, deleteTemplate, isLoading, error } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -28,6 +31,28 @@ export default function Templates() {
       case 'exchange': return 'text-success bg-success/10 border-success/20';
       case 'teams': return 'text-neon-cyan bg-neon-cyan/10 border-neon-cyan/20';
       default: return 'text-text-secondary bg-bg-deep border-border-color';
+    }
+  };
+
+  const handleDownload = (e: React.MouseEvent, template: Template) => {
+    e.stopPropagation();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template.payload, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${template.name.replace(/\s+/g, '_')}_payload.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('¿Estás seguro de que deseas eliminar esta plantilla?')) {
+      try {
+        await deleteTemplate(id);
+      } catch (err) {
+        console.error("Error deleting template:", err);
+      }
     }
   };
 
@@ -108,10 +133,34 @@ export default function Templates() {
                         <span className="truncate max-w-[240px]" title={template.endpoint}>{template.endpoint}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button onClick={(e) => { e.stopPropagation(); alert("Opciones de plantilla en desarrollo"); }} className="p-2 text-text-muted hover:text-text-primary hover:bg-bg-card rounded-md transition-colors">
-                        <MoreVertical size={16} />
-                      </button>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setSelectedTemplate(template);
+                            setIsDetailsModalOpen(true);
+                          }} 
+                          title="Ver Payload"
+                          className="p-2 text-text-muted hover:text-accent-blue hover:bg-accent-blue/10 rounded-md transition-colors"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDownload(e, template)}
+                          title="Descargar JSON"
+                          className="p-2 text-text-muted hover:text-success hover:bg-success/10 rounded-md transition-colors"
+                        >
+                          <Download size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDelete(e, template.id)}
+                          title="Eliminar Plantilla"
+                          className="p-2 text-text-muted hover:text-error hover:bg-error/10 rounded-md transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -124,6 +173,12 @@ export default function Templates() {
       <CreateTemplateModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
+      />
+      
+      <TemplateDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        template={selectedTemplate}
       />
     </div>
   );

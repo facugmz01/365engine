@@ -61,6 +61,8 @@ interface AppState {
   // Actions
   fetchOrganizations: () => Promise<void>;
   fetchTemplates: () => Promise<void>;
+  createTemplate: (data: any) => Promise<void>;
+  deleteTemplate: (id: string) => Promise<void>;
   fetchPackages: () => Promise<void>;
   fetchJobs: () => Promise<void>;
   setCurrentUser: (user: User | null) => void;
@@ -96,7 +98,7 @@ function getStoredUser(): User | null {
   }
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   organizations: [],
   templates: [],
   packages: [],
@@ -126,6 +128,32 @@ export const useStore = create<AppState>((set) => ({
       set({ templates: response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.response?.data?.detail || 'Failed to fetch templates', isLoading: false });
+    }
+  },
+
+  createTemplate: async (data: any) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiClient.post('/templates', data);
+      set({ templates: [...get().templates, response.data] });
+    } catch (error: any) {
+      set({ error: error.response?.data?.detail || error.message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  deleteTemplate: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.delete(`/templates/${id}`);
+      set({ templates: get().templates.filter(t => t.id !== id) });
+    } catch (error: any) {
+      set({ error: error.response?.data?.detail || error.message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 

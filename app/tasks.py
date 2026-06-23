@@ -450,6 +450,10 @@ async def async_run_import(org_id: uuid.UUID, endpoint: str, category: str) -> N
                 description = raw_policy.get("description") or f"Automatically imported configuration from tenant {org.name}"
 
                 sanitized_payload = dict(raw_policy)
+                
+                # Fetch nested configuration sub-resources depending on endpoint type
+                await client.enrich_policy_payload(endpoint, sanitized_payload)
+                
                 read_only_keys = [
                     "id",
                     "version",
