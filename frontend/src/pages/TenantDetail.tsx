@@ -30,6 +30,11 @@ export default function TenantDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  
+  // Test console state
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
+  const [testError, setTestError] = useState<string | null>(null);
 
   const loadOrgDetails = async () => {
     if (!id) return;
@@ -89,12 +94,15 @@ export default function TenantDetail() {
 
   const handleTestConnection = async () => {
     setIsTesting(true);
+    setShowTestModal(true);
+    setTestResults(null);
+    setTestError(null);
     try {
       // Backend: GET /api/v1/organizations/{org_id}/validate
       const response = await apiClient.get(`/organizations/${orgDetails.id}/validate`);
-      alert('Validación completada:\n\n' + JSON.stringify(response.data, null, 2));
+      setTestResults(response.data);
     } catch (error: any) {
-      alert('Error en la prueba de conexión: ' + (error.response?.data?.detail || error.message));
+      setTestError('Error en la prueba de conexión: \n' + (error.response?.data?.detail || error.message));
     } finally {
       setIsTesting(false);
     }
@@ -375,6 +383,84 @@ export default function TenantDetail() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Test Connection Modal */}
+      {showTestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="glass-panel w-full max-w-2xl p-6 relative">
+            <button
+              onClick={() => setShowTestModal(false)}
+              className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2 mb-6">
+              <ShieldCheck size={20} className="text-accent-blue" />
+              Consola de Conexión: Microsoft Graph
+            </h3>
+
+            <div className="bg-[#0D1117] rounded-lg p-4 font-mono text-sm overflow-y-auto max-h-[60vh] border border-[#30363D] shadow-inner text-[#E6EDF3]">
+              {isTesting && !testResults && !testError && (
+                <div className="flex items-center gap-3 text-[#8B949E] animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-accent-blue animate-ping"></div>
+                  Iniciando validación de prerrequisitos y conexión...
+                </div>
+              )}
+              
+              {testError && (
+                <div className="text-[#FF7B72] whitespace-pre-wrap font-semibold border-l-4 border-[#FF7B72] pl-3 py-1 bg-[#FF7B72]/10">
+                  {testError}
+                </div>
+              )}
+              
+              {testResults && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-2 pb-3 border-b border-[#30363D]">
+                    <span className="font-bold text-[#8B949E]">Status de Aprobación Global:</span>
+                    {testResults.valid ? (
+                      <span className="text-[#3FB950] font-bold bg-[#3FB950]/10 px-2 py-0.5 rounded border border-[#3FB950]/20">✓ APROBADO</span>
+                    ) : (
+                      <span className="text-[#FF7B72] font-bold bg-[#FF7B72]/10 px-2 py-0.5 rounded border border-[#FF7B72]/20">✗ RECHAZADO</span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-3 mt-4">
+                    {Object.entries(testResults.details || {}).map(([key, value]: [string, any]) => {
+                      const title = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                      const isPassed = value.status === 'passed';
+                      const isWarn = value.status === 'warning';
+                      const colorClass = isPassed ? 'text-[#3FB950]' : (isWarn ? 'text-[#D2A8FF]' : 'text-[#FF7B72]');
+                      const icon = isPassed ? '✓' : (isWarn ? '⚠' : '✗');
+                      
+                      return (
+                        <div key={key} className="bg-[#161B22] p-3 rounded border border-[#30363D]">
+                          <div className={`font-semibold ${colorClass} mb-1 flex items-center gap-2`}>
+                            <span>{icon}</span> [{title}]
+                          </div>
+                          <div className="text-[#8B949E] pl-5">{value.message}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="pt-4 mt-4 border-t border-[#30363D] text-[#8B949E] italic flex items-center gap-2">
+                    <span className="w-2 h-2 bg-text-muted rounded-full"></span> Ejecución finalizada.
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowTestModal(false)}
+                className="px-4 py-2 bg-bg-deep border border-border-color text-text-primary text-sm font-medium rounded-lg hover:bg-bg-card transition-colors"
+              >
+                Cerrar Consola
+              </button>
+            </div>
           </div>
         </div>
       )}
