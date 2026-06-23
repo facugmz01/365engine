@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-deep: #09090b; /* Zinc 950 */
+  --color-bg-panel: #18181b; /* Zinc 900 */
+  --color-bg-card: #27272a; /* Zinc 800 */
+  --color-bg-card-hover: #3f3f46; /* Zinc 700 */
+  
+  --color-text-primary: #fafafa; /* Zinc 50 */
+  --color-text-secondary: #a1a1aa; /* Zinc 400 */
+  --color-text-muted: #71717a; /* Zinc 500 */
+  
+  /* Enterprise Accents (Indigo/Blue) */
+  --color-neon-cyan: #4f46e5; /* Indigo 600 */
+  --color-neon-cyan-dim: rgba(79, 70, 229, 0.2);
+  --color-neon-cyan-glow: transparent;
+  
+  --color-accent-blue: #2563eb; /* Blue 600 */
+  --color-accent-purple: #7c3aed; /* Violet 600 */
+  
+  /* Status Colors (Sober versions) */
+  --color-success: #16a34a; /* Green 600 */
+  --color-warning: #ea580c; /* Orange 600 */
+  --color-error: #dc2626; /* Red 600 */
+  
+  --color-border-color: #3f3f46; /* Zinc 700 */
+  --color-border-focus: #4f46e5; /* Indigo 600 */
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-deep text-text-primary font-sans antialiased m-0 p-0;
+  }
+}
+
+/* Base custom utilities */
+@layer components {
+  .glass-panel {
+    @apply bg-bg-card border border-border-color shadow-sm rounded-xl;
+  }
+}

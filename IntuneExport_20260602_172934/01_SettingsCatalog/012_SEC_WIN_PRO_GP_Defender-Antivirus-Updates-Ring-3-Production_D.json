@@ -1,0 +1,117 @@
+{
+  "platforms": "windows10",
+  "settings": [
+    {
+      "id": "0",
+      "settingInstance": {
+        "auditRuleInformation": null,
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+        "settingInstanceTemplateReference": {
+          "settingInstanceTemplateId": "f7e1409d-9c85-4a3f-85a6-ad05cc8ccf13"
+        },
+        "choiceSettingValue": {
+          "value": "device_vendor_msft_defender_configuration_engineupdateschannel_5",
+          "settingValueTemplateReference": {
+            "settingValueTemplateId": "afc8df70-7b19-4335-b200-bf4b7e098f67",
+            "useTemplateDefault": false
+          },
+          "children": []
+        },
+        "settingDefinitionId": "device_vendor_msft_defender_configuration_engineupdateschannel"
+      }
+    },
+    {
+      "id": "1",
+      "settingInstance": {
+        "auditRuleInformation": null,
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+        "settingInstanceTemplateReference": {
+          "settingInstanceTemplateId": "e78b3ace-75d0-4aad-b3fa-4f49390d6483"
+        },
+        "choiceSettingValue": {
+          "value": "device_vendor_msft_defender_configuration_platformupdateschannel_5",
+          "settingValueTemplateReference": {
+            "settingValueTemplateId": "d3b0d61a-bdc5-4507-84d0-5f2a4a3e11a5",
+            "useTemplateDefault": false
+          },
+          "children": []
+        },
+        "settingDefinitionId": "device_vendor_msft_defender_configuration_platformupdateschannel"
+      }
+    },
+    {
+      "id": "2",
+      "settingInstance": {
+        "auditRuleInformation": null,
+        "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+        "settingInstanceTemplateReference": {
+          "settingInstanceTemplateId": "ba273649-e186-4377-89d5-87405bc9a87c"
+        },
+        "choiceSettingValue": {
+          "value": "device_vendor_msft_defender_configuration_securityintelligenceupdateschannel_5",
+          "settingValueTemplateReference": {
+            "settingValueTemplateId": "41ea06bf-e94a-482a-9aaa-7fd535fb4150",
+            "useTemplateDefault": false
+          },
+          "children": []
+        },
+        "settingDefinitionId": "device_vendor_msft_defender_configuration_securityintelligenceupdateschannel"
+      }
+    }
+  ],
+  "templateReference": {
+    "templateDisplayVersion": "Version 1",
+    "templateId": "e3f74c5a-a6de-411d-aef6-eb15628f3a0a_1",
+    "templateFamily": "endpointSecurityAntivirus",
+    "templateDisplayName": "Defender Update controls"
+  },
+  "technologies": "mdm,microsoftSense",
+  "name": "SEC_WIN_PRO_GP_Defender-Antivirus-Updates-Ring-3-Production_D",
+  "description": "",
+  "assignments": [
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "94b0ad8d-5762-4f51-8b90-760a75165e1e",
+      "id": "94b0ad8d-5762-4f51-8b90-760a75165e1e_1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+      "source": "direct"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "febb915c-d1a5-4bc5-a83f-122ffc36de22",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "94b0ad8d-5762-4f51-8b90-760a75165e1e",
+      "id": "94b0ad8d-5762-4f51-8b90-760a75165e1e_febb915c-d1a5-4bc5-a83f-122ffc36de22",
+      "source": "direct"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "c6c48e0f-64f8-4e98-957f-a8470c823a20",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "94b0ad8d-5762-4f51-8b90-760a75165e1e",
+      "id": "94b0ad8d-5762-4f51-8b90-760a75165e1e_c6c48e0f-64f8-4e98-957f-a8470c823a20",
+      "source": "direct"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "339362e3-0dd3-4b3f-af3c-9d7822d3742f",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "94b0ad8d-5762-4f51-8b90-760a75165e1e",
+      "id": "94b0ad8d-5762-4f51-8b90-760a75165e1e_339362e3-0dd3-4b3f-af3c-9d7822d3742f",
+      "source": "direct"
+    }
+  ]
+}

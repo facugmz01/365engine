@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M365 Tenant Configuration Engine</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+</head>
+<body>
+    <div id="app">
+        <!-- 1. LOGIN VIEW -->
+        <div id="login-view" class="view active">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo-icon"><i class="fa-solid fa-server fa-spin-slow"></i></div>
+                    <h1>M365 CONFIG ENGINE</h1>
+                    <p>Acceso al panel central de baselines</p>
+                </div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username"><i class="fa-solid fa-user"></i> Usuario</label>
+                        <input type="text" id="username" placeholder="Ingresa tu usuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password"><i class="fa-solid fa-lock"></i> Contraseña</label>
+                        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                    </div>
+                    <div id="login-error" class="alert error hidden">
+                        <i class="fa-solid fa-circle-exclamation"></i> Credenciales inválidas.
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+                
+                <div id="sso-container" class="hidden" style="margin-top: 15px; text-align: center;">
+                    <div style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.8em;">O inicia sesión con tu cuenta corporativa</div>
+                    <button id="btn-sso-login" class="btn btn-secondary btn-block" style="background-color: #2F2F2F; border-color: #444;">
+                        <i class="fa-brands fa-microsoft" style="color: #00a4ef;"></i> Iniciar Sesión con Microsoft
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. DASHBOARD VIEW -->
+        <div id="dashboard-view" class="view hidden">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <i class="fa-solid fa-shield-halved text-cyan"></i>
+                    <span>CONFIG ENGINE</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li>
+                            <a href="#tenants" class="nav-link active" data-tab="tenants">
+                                <i class="fa-solid fa-network-wired"></i> <span>Organizaciones</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#biblioteca" class="nav-link" data-tab="biblioteca">
+                                <i class="fa-solid fa-book-bookmark"></i> <span>Directivas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#plantillas" class="nav-link" data-tab="plantillas">
+                                <i class="fa-solid fa-layer-group"></i> <span>Plantillas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#despliegue" class="nav-link" data-tab="despliegue">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> <span>Despliegues</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#historial" class="nav-link" data-tab="historial">
+                                <i class="fa-solid fa-clock-rotate-left"></i> <span>Historial Jobs</span>
+                            </a>
+                        </li>
+                        <li class="admin-only hidden">
+                            <a href="#usuarios" class="nav-link" data-tab="usuarios">
+                                <i class="fa-solid fa-users-gear"></i> <span>Usuarios</span>
+                            </a>
+                        </li>
+                        <li class="admin-only hidden">
+                            <a href="#auditoria" class="nav-link" data-tab="auditoria">
+                                <i class="fa-solid fa-clipboard-list"></i> <span>Auditoría</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <div>
+                            <span id="user-display">admin</span>
+                            <span id="role-display" class="badge badge-info" style="font-size: 0.7em;">Role</span>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="btn btn-icon-only" title="Cerrar Sesión">
+                        <i class="fa-solid fa-power-off text-danger"></i>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Container -->
+            <main class="main-content">
+                <!-- Notifications Area -->
+                <div id="notification-toast" class="toast hidden">
+                    <span class="toast-message">Notificación</span>
+                    <button class="toast-close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- TAB 1: TENANTS -->
+                <section id="tab-tenants" class="tab-content active">
+                    <div class="content-header">
+                        <h2>Organizaciones M365 (Tenants)</h2>
+                        <button id="btn-show-add-org" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Registrar Tenant
+                        </button>
+                    </div>
+
+                    <!-- Add Organization Modal/Form -->
+                    <div id="add-org-container" class="card form-card hidden">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-registered"></i> Registrar Nueva Organización</h3>
+                            <button id="btn-hide-add-org" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="add-org-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="org-name">Nombre Descriptivo</label>
+                                    <input type="text" id="org-name" placeholder="Ej: Tenant de Producción Contoso" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="org-tenant-id">Microsoft Tenant ID (Directory ID)</label>
+                                    <input type="text" id="org-tenant-id" placeholder="Ej: 12345678-abcd-1234-abcd-1234567890ab" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Guardar Organización</button>
+                                <button type="button" id="btn-cancel-add-org" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tenants List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Tenants Registrados</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Tenant ID</th>
+                                        <th>Credenciales</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tenants-list-tbody">
+                                    <!-- Dynamic content -->
+                                    <tr>
+                                        <td colspan="4" class="text-center">Cargando organizaciones...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 1.5: CLIENT DETAILS (Hidden by default) -->
+                <section id="tab-client-details" class="tab-content hidden">
+                    <div class="content-header">
+                        <h2>Detalles del Cliente: <span id="detail-org-name" class="text-cyan"></span></h2>
+                        <button class="btn btn-secondary" onclick="switchTab('tenants')">
+                            <i class="fa-solid fa-arrow-left"></i> Volver
+                        </button>
+                    </div>
+
+                    <!-- Client Info & Settings -->
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <!-- Tech Data -->
+                        <div class="card" style="flex: 1; min-width: 300px;">
+                            <div class="card-header">
+                                <h3>Ficha Técnica</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Tenant ID:</strong> <code id="detail-org-tenant-id"></code></p>
+                                <p><strong>Credenciales:</strong> <span id="detail-org-creds-badge"></span></p>
+                                <div style="margin-top: 15px;">
+                                    <button class="btn btn-secondary btn-sm" id="btn-detail-cred">
+                                        <i class="fa-solid fa-key"></i> Actualizar Credenciales
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="btn-detail-test">
+                                        <i class="fa-solid fa-check-double"></i> Test Conectores
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drift Automation Settings -->
+                        <div class="card" style="flex: 1; min-width: 300px;">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-robot text-cyan"></i> Automatización Drift</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="drift-settings-form">
+                                    <input type="hidden" id="detail-org-id">
+                                    <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                                        <label class="switch" style="margin:0;">
+                                            <input type="checkbox" id="detail-auto-drift-enabled">
+                                            <span class="slider round"></span>
+                                        </label>
+                                        <label for="detail-auto-drift-enabled" style="margin:0;">Activar Escaneo Automático</label>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 15px;">
+                                        <label>Hora de ejecución (Formato 24h, ej: 03:00)</label>
+                                        <input type="time" id="detail-drift-schedule" class="form-control">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm mt-2">Guardar Ajustes</button>
+                                    <button type="button" class="btn btn-secondary btn-sm mt-2" id="btn-detail-scan-manual">
+                                        <i class="fa-solid fa-code-compare"></i> Escanear Ahora
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Tables -->
+                    <div style="margin-top: 20px;">
+                        <ul class="nav nav-tabs" style="display:flex; list-style:none; padding:0; border-bottom:1px solid #333; gap:15px; margin-bottom:15px;">
+                            <li class="active" style="padding-bottom:10px; cursor:pointer; color:var(--text-primary); border-bottom:2px solid var(--neon-cyan);" id="tab-nav-drift">Historial de Desviaciones (Drift)</li>
+                            <li style="padding-bottom:10px; cursor:pointer; color:var(--text-secondary);" id="tab-nav-deployments">Historial de Despliegues</li>
+                        </ul>
+
+                        <div id="detail-drift-history">
+                            <div class="card">
+                                <table class="table" style="font-size: 0.9em;">
+                                    <thead><tr><th>Fecha / Hora</th><th>Origen</th><th>Desviaciones</th><th>Acción</th></tr></thead>
+                                    <tbody id="detail-drift-tbody">
+                                        <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="detail-deployments-history" class="hidden">
+                            <div class="card">
+                                <table class="table" style="font-size: 0.9em;">
+                                    <thead><tr><th>Job ID</th><th>Fecha / Hora</th><th>Estado</th></tr></thead>
+                                    <tbody id="detail-jobs-tbody">
+                                        <tr><td colspan="3" class="text-center">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: BIBLIOTECA (DIRECTIVAS) -->
+                <section id="tab-biblioteca" class="tab-content">
+                    <div class="content-header">
+                        <h2>Directivas Individuales</h2>
+                        <div class="header-actions" style="display: flex; gap: 10px;">
+                            <button id="btn-show-create-template" class="btn btn-primary">
+                                <i class="fa-solid fa-plus"></i> Crear Directiva Manual
+                            </button>
+                            <button id="btn-show-import-policy" class="btn btn-secondary">
+                                <i class="fa-solid fa-file-import"></i> Importar Directivas
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Import Policy Form -->
+                    <div id="import-policy-container" class="card form-card hidden">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-cloud-arrow-down text-cyan"></i> Importar desde Tenant de Origen</h3>
+                            <button id="btn-hide-import-policy" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="import-policy-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="import-org-id">Tenant de Origen (con credenciales)</label>
+                                    <select id="import-org-id" required>
+                                        <option value="">Selecciona organización...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="import-mode">Modo de Importación</label>
+                                    <select id="import-mode" required>
+                                        <option value="all">Importar Todo (Todos los Endpoints de M365)</option>
+                                        <option value="custom">Personalizado (Seleccionar Recursos)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Custom Selection Container -->
+                            <div id="import-custom-selection" class="hidden" style="margin-top: 20px;">
+                                <label style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; display: block;">
+                                    <i class="fa-solid fa-list-check text-cyan"></i> Seleccionar Recursos a Importar
+                                </label>
+                                <div id="import-resources-checkboxes" class="checkboxes-list" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <!-- Will be populated dynamically via JavaScript -->
+                                </div>
+                                
+                                <!-- Custom Endpoint Input (optional) -->
+                                <div class="card" style="background-color: rgba(255, 255, 255, 0.01); border-color: rgba(255, 255, 255, 0.05); padding: 15px; margin-bottom: 15px;">
+                                    <div class="form-group row-checkbox" style="margin-bottom: 10px;">
+                                        <input type="checkbox" id="import-enable-custom-endpoint">
+                                        <label for="import-enable-custom-endpoint"><strong>Agregar Endpoint Manual Personalizado</strong></label>
+                                    </div>
+                                    <div id="import-custom-endpoint-fields" class="form-grid hidden">
+                                        <div class="form-group">
+                                            <label for="import-custom-category">Categoría / Servicio</label>
+                                            <select id="import-custom-category">
+                                                <option value="intune">Intune (General)</option>
+                                                <option value="defender">Defender</option>
+                                                <option value="exchange">Exchange</option>
+                                                <option value="sharepoint">SharePoint</option>
+                                                <option value="entra_id">Entra ID</option>
+                                                <option value="purview">Purview</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="import-custom-endpoint">Microsoft Graph Endpoint</label>
+                                            <input type="text" id="import-custom-endpoint" placeholder="Ej: deviceManagement/configurationPolicies">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Iniciar Importación en Segundo Plano</button>
+                                <button type="button" id="btn-cancel-import-policy" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Create Template Form -->
+                    <div id="create-template-container" class="card form-card hidden">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-file-circle-plus text-cyan"></i> Crear Directiva Manualmente</h3>
+                            <button id="btn-hide-create-template" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="create-template-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="create-tpl-name">Nombre de la Política</label>
+                                    <input type="text" id="create-tpl-name" placeholder="Ej: Restricciones de Dispositivo Windows" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="create-tpl-category">Categoría</label>
+                                    <select id="create-tpl-category" required>
+                                        <option value="intune">Intune (General)</option>
+                                        <option value="defender">Defender</option>
+                                        <option value="exchange">Exchange</option>
+                                        <option value="sharepoint">SharePoint</option>
+                                        <option value="entra_id">Entra ID</option>
+                                        <option value="purview">Purview</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="create-tpl-endpoint">Microsoft Graph API Endpoint</label>
+                                <input type="text" id="create-tpl-endpoint" placeholder="Ej: deviceManagement/deviceConfigurations" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="create-tpl-description">Descripción (Opcional)</label>
+                                <input type="text" id="create-tpl-description" placeholder="Breve descripción de la configuración">
+                            </div>
+                            <div class="form-group">
+                                <label for="create-tpl-payload">Payload JSON</label>
+                                <textarea id="create-tpl-payload" rows="10" placeholder='{ "@odata.type": "#microsoft.graph.windows10GeneralConfiguration", "displayName": "Mi Perfil" }' required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); font-family: monospace; border-radius: 4px; resize: vertical;"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Guardar Plantilla</button>
+                                <button type="button" id="btn-cancel-create-template" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Library Templates -->
+                    <div class="card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Directivas Disponibles</h3>
+                            <div class="filter-group" style="display: flex; align-items: center; gap: 10px;">
+                                <label for="library-category-filter" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;"><i class="fa-solid fa-filter"></i> Filtrar:</label>
+                                <select id="library-category-filter" style="padding: 5px 10px; font-size: 0.9rem;">
+                                    <option value="all">Todas las categorías</option>
+                                    <option value="intune">Intune</option>
+                                    <option value="defender">Defender</option>
+                                    <option value="exchange">Exchange</option>
+                                    <option value="sharepoint">SharePoint</option>
+                                    <option value="entra_id">Entra ID</option>
+                                    <option value="purview">Purview</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Endpoint de Microsoft Graph</th>
+                                        <th>Descripción</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="templates-list-tbody">
+                                    <!-- Dynamic content -->
+                                    <tr>
+                                        <td colspan="5" class="text-center">Cargando biblioteca...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- JSON Preview Modal -->
+                    <div id="json-modal" class="modal hidden">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="json-modal-title">Detalle de Plantilla</h3>
+                                <button id="btn-close-json-modal" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="modal-body">
+                                <pre id="json-modal-pre"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB NUEVO: PLANTILLAS -->
+                <section id="tab-plantillas" class="tab-content">
+                    <div class="content-header">
+                        <h2>Gestión de Plantillas (Agrupaciones)</h2>
+                        <button id="btn-show-create-package" class="btn btn-primary">
+                            <i class="fa-solid fa-layer-group"></i> Armar Nueva Plantilla
+                        </button>
+                    </div>
+
+                    <!-- Create Package Form -->
+                    <div id="create-package-container" class="card form-card hidden">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-boxes-packing text-cyan"></i> Armar Plantilla de Despliegue</h3>
+                            <button id="btn-hide-create-package" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="create-package-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="create-pkg-name">Nombre de la Plantilla</label>
+                                    <input type="text" id="create-pkg-name" placeholder="Ej: Baseline Seguridad Standard Nivel 1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="create-pkg-description">Descripción</label>
+                                    <input type="text" id="create-pkg-description" placeholder="Breve descripción del paquete">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-20">
+                                <h4>Seleccionar Directivas para incluir en la Plantilla</h4>
+                                <div class="filter-group mb-10" style="display: flex; align-items: center; gap: 10px;">
+                                    <label for="pkg-category-filter" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;"><i class="fa-solid fa-filter"></i> Filtrar Vista:</label>
+                                    <select id="pkg-category-filter" style="padding: 5px 10px; font-size: 0.9rem;">
+                                        <option value="all">Todas las categorías</option>
+                                        <option value="intune">Intune</option>
+                                        <option value="defender">Defender</option>
+                                        <option value="exchange">Exchange</option>
+                                        <option value="sharepoint">SharePoint</option>
+                                        <option value="entra_id">Entra ID</option>
+                                        <option value="purview">Purview</option>
+                                    </select>
+                                </div>
+                                <div id="pkg-directives-checkboxes" class="checkboxes-list" style="max-height: 300px; overflow-y: auto;">
+                                    <p class="text-muted text-center">Cargando directivas...</p>
+                                </div>
+                            </div>
+
+                            <div class="form-actions mt-20">
+                                <button type="submit" class="btn btn-primary">Guardar Plantilla</button>
+                                <button type="button" id="btn-cancel-create-package" class="btn btn-secondary">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Packages List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Plantillas Guardadas</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad Directivas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="packages-list-tbody">
+                                    <!-- Dynamic content -->
+                                    <tr>
+                                        <td colspan="4" class="text-center">Cargando plantillas...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: DESPLIEGUE -->
+                <section id="tab-despliegue" class="tab-content">
+                    <div class="content-header">
+                        <h2>Despliegue de Líneas Base</h2>
+                    </div>
+
+                    <form id="deployment-form">
+                        <div class="grid-2-columns">
+                            <!-- Left panel: Settings -->
+                            <div class="column-panel flex-column gap-20">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>1. Destino del Despliegue</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="deploy-org-id">Organización Tenant Destino</label>
+                                            <select id="deploy-org-id" required>
+                                                <option value="">Selecciona organización...</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group row-checkbox">
+                                            <input type="checkbox" id="deploy-bypass-validation">
+                                            <label for="deploy-bypass-validation">Omitir validaciones previas obligatorias (Bypass)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>2. Configuración de Asignación Central</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="deploy-assignment-target">Objetivo de Asignación Global</label>
+                                            <select id="deploy-assignment-target" required>
+                                                <option value="unassigned">Sin asignar (Unassigned)</option>
+                                                <option value="all_devices">Todos los dispositivos (All Devices)</option>
+                                                <option value="all_users">Todos los usuarios licenciados (All Users)</option>
+                                                <option value="custom_groups">Grupos de seguridad específicos</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div id="deploy-groups-selector-container" class="form-group hidden">
+                                            <label for="deploy-assign-to-groups">Nombres de Grupos Destino</label>
+                                            <div id="deploy-assign-groups-checkboxes" class="mb-2"></div>
+                                            <input type="text" id="deploy-assign-to-groups" placeholder="Otros grupos existentes (Ej: SG-Sistemas, SG-Piloto)">
+                                            <small class="text-muted">Si seleccionas o ingresas grupos aquí, las políticas se asociarán a estos grupos en el tenant destino.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header flex-header">
+                                        <h3>3. Crear Grupos Dinámicos/Estáticos</h3>
+                                        <button type="button" id="btn-add-group-def" class="btn btn-secondary btn-sm">
+                                            <i class="fa-solid fa-plus"></i> Añadir Definición de Grupo
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="create-groups-list" class="flex-column gap-10">
+                                            <!-- Dynamic group definitions injected here -->
+                                            <p class="text-muted text-center py-2" id="no-groups-defined">No hay grupos a crear definidos para este trabajo.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right panel: Templates selection & Per-template assignment overrides -->
+                            <div class="column-panel flex-column gap-20">
+                                <div class="card">
+                                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <h3>4. Seleccionar Elementos a Desplegar</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Source Toggle -->
+                                        <div class="deploy-source-toggle mb-20" style="display: flex; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                                            <div style="display: flex; align-items: center; gap: 5px;">
+                                                <input type="radio" id="deploy-src-package" name="deploy_source" value="package" checked>
+                                                <label for="deploy-src-package">Desde Plantilla Guardada</label>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 5px;">
+                                                <input type="radio" id="deploy-src-custom" name="deploy_source" value="custom">
+                                                <label for="deploy-src-custom">Directivas Individuales (Personalizado)</label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Package Selector Container -->
+                                        <div id="deploy-source-package-container">
+                                            <div class="form-group">
+                                                <label for="deploy-selected-package">Seleccionar Plantilla</label>
+                                                <select id="deploy-selected-package">
+                                                    <option value="">Selecciona plantilla...</option>
+                                                </select>
+                                                <small class="text-muted" id="deploy-package-info" style="display: block; margin-top: 5px;"></small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Custom Checkboxes Container -->
+                                        <div id="deploy-source-custom-container" class="hidden">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                <strong>Selección Manual:</strong>
+                                                <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
+                                                    <i class="fa-solid fa-filter text-muted"></i>
+                                                    <select id="deploy-category-filter" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px;">
+                                                        <option value="all">Todas</option>
+                                                        <option value="intune">Intune</option>
+                                                        <option value="defender">Defender</option>
+                                                        <option value="exchange">Exchange</option>
+                                                        <option value="sharepoint">SharePoint</option>
+                                                        <option value="entra_id">Entra ID</option>
+                                                        <option value="purview">Purview</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="select-templates-list-container">
+                                                <div id="deploy-templates-checkboxes" class="checkboxes-list">
+                                                    <!-- List of templates with check boxes -->
+                                                    <p class="text-muted text-center">Cargando directivas...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>5. Asignaciones Específicas por Plantilla (Granular)</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="per-template-assignments-container" class="flex-column gap-15">
+                                            <!-- Dynamically generated overrides based on selected templates -->
+                                            <p class="text-muted text-center">Selecciona plantillas arriba para configurar asignaciones granulares.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card primary-card">
+                                    <div class="card-body flex-center py-4">
+                                        <button type="submit" class="btn btn-primary btn-large btn-block" id="btn-submit-deployment">
+                                            <i class="fa-solid fa-rocket"></i> <span>Ejecutar Implementación</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- TAB 4: HISTORIAL -->
+                <section id="tab-historial" class="tab-content">
+                    <div class="content-header">
+                        <h2>Historial de Trabajos y Reversiones (Jobs)</h2>
+                        <button id="btn-refresh-jobs" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                        </button>
+                    </div>
+
+                    <!-- Jobs List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Registro de Trabajos de Despliegue</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID de Trabajo</th>
+                                        <th>Organización</th>
+                                        <th>Estado</th>
+                                        <th>Solicitante</th>
+                                        <th>Aprobador</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jobs-list-tbody">
+                                    <!-- Dynamic content -->
+                                    <tr>
+                                        <td colspan="7" class="text-center">Cargando historial de trabajos...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Job Detail Modal (with validation reports and deployment results) -->
+                    <div id="job-detail-modal" class="modal hidden">
+                        <div class="modal-content large-modal">
+                            <div class="modal-header">
+                                <h3>Detalle y Reporte de Despliegue</h3>
+                                <button id="btn-close-job-modal" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="modal-body flex-column gap-20" id="job-modal-body">
+                                <!-- Dynamically populated report content -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 5: USUARIOS (Admin Only) -->
+                <section id="tab-usuarios" class="tab-content admin-only hidden">
+                    <div class="content-header">
+                        <h2>Gestión de Usuarios y Roles</h2>
+                        <button id="btn-refresh-users" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                        </button>
+                    </div>
+
+                    <div class="card mb-20">
+                        <div class="card-header">
+                            <h3>Crear Nuevo Usuario</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="create-user-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                                <div class="form-group" style="flex: 1; min-width: 200px;">
+                                    <label>Usuario</label>
+                                    <input type="text" id="new-username" required placeholder="Ej: mmartinez">
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 200px;">
+                                    <label>Contraseña</label>
+                                    <input type="password" id="new-password" required placeholder="Contraseña segura">
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 200px;">
+                                    <label>Rol</label>
+                                    <select id="new-role" required>
+                                        <option value="deployer">Deployer (Desplegador)</option>
+                                        <option value="approver">Approver (Aprobador)</option>
+                                        <option value="super_admin">Super Admin</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="margin-bottom: 5px;">
+                                    <i class="fa-solid fa-user-plus"></i> Crear
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Estado</th>
+                                        <th class="text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-list-tbody">
+                                    <tr><td colspan="3" class="text-center">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Edit User Modal -->
+                <div id="edit-user-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Editar Usuario</h3>
+                            <button class="btn-close" id="btn-close-edit-user-modal"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="edit-user-form">
+                                <input type="hidden" id="edit-user-id">
+                                <div class="form-group">
+                                    <label>Usuario</label>
+                                    <input type="text" id="edit-username" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label>Rol</label>
+                                    <select id="edit-role" required>
+                                        <option value="deployer">Deployer</option>
+                                        <option value="approver">Approver</option>
+                                        <option value="super_admin">Super Admin</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Estado</label>
+                                    <select id="edit-status" required>
+                                        <option value="true">Activo</option>
+                                        <option value="false">Inactivo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nueva Contraseña (Opcional)</label>
+                                    <input type="password" id="edit-password" placeholder="Dejar en blanco para no cambiar">
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                                    <button type="button" class="btn btn-secondary" id="btn-cancel-edit-user">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: AUDITORIA (Admin Only) -->
+                <section id="tab-auditoria" class="tab-content admin-only hidden">
+                    <div class="content-header">
+                        <h2>Registro de Auditoría</h2>
+                        <button id="btn-refresh-audit" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table" style="font-size: 0.9em;">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha / Hora</th>
+                                        <th>Usuario</th>
+                                        <th>Acción</th>
+                                        <th>Recurso</th>
+                                        <th>Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-list-tbody">
+                                    <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Credentials Register Modal/Form -->
+    <div id="add-cred-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-key text-cyan"></i> <span id="add-cred-title">Configurar Credenciales</span></h3>
+                <button id="btn-hide-add-cred" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-cred-form">
+                    <input type="hidden" id="cred-org-id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cred-client-id">Application (Client) ID</label>
+                            <input type="text" id="cred-client-id" placeholder="Application ID de la App registrada" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cred-client-secret">Client Secret Value</label>
+                            <input type="password" id="cred-client-secret" placeholder="Valor del client secret" required>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" id="btn-cancel-add-cred" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Credenciales</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPLOYMENT CONSOLE PANEL (real-time log viewer) -->
+    <div id="deploy-console-overlay" class="deploy-console-overlay hidden">
+        <div class="deploy-console">
+            <!-- Console Header -->
+            <div class="console-header">
+                <div class="console-header-left">
+                    <span class="console-status-icon" id="console-status-icon">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    </span>
+                    <div>
+                        <div class="console-title" id="console-title">Ejecutando despliegue...</div>
+                        <div class="console-subtitle" id="console-subtitle">Conectando con el tenant destino</div>
+                    </div>
+                </div>
+                <div class="console-header-right">
+                    <span class="console-badge" id="console-status-badge">EN CURSO</span>
+                    <button class="btn btn-close" id="console-close-btn" title="Cerrar consola">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Console Body (scrollable log) -->
+            <div class="console-body" id="console-body">
+                <div class="console-placeholder">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>Esperando salida del proceso...</span>
+                </div>
+            </div>
+
+            <!-- Console Footer -->
+            <div class="console-footer">
+                <div class="console-stats" id="console-stats">
+                    <span class="stat-ok"><i class="fa-solid fa-circle-check"></i> <span id="console-ok-count">0</span> éxitos</span>
+                    <span class="stat-warn"><i class="fa-solid fa-triangle-exclamation"></i> <span id="console-warn-count">0</span> advertencias</span>
+                    <span class="stat-err"><i class="fa-solid fa-circle-xmark"></i> <span id="console-err-count">0</span> errores</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="console-view-history-btn" style="display:none;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Ver en Historial
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIMULATION MODAL -->
+    <div id="simulation-modal" class="deploy-console-overlay hidden" style="z-index: 1100;">
+        <div class="deploy-console" style="height: auto; max-height: 80vh;">
+            <div class="console-header" style="background-color: #2F2F2F;">
+                <div class="console-header-left">
+                    <span class="console-status-icon" style="color: var(--neon-cyan);">
+                        <i class="fa-solid fa-microscope"></i>
+                    </span>
+                    <div>
+                        <div class="console-title">Reporte de Simulación (Dry-Run)</div>
+                        <div class="console-subtitle" id="sim-subtitle">Impacto del despliegue en el tenant</div>
+                    </div>
+                </div>
+                <div class="console-header-right">
+                    <button class="btn btn-close" id="btn-close-sim" title="Cancelar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="console-body" id="sim-body" style="background-color: var(--bg-primary); padding: 20px;">
+                <!-- Simulation Results Injected Here -->
+            </div>
+            <div class="console-footer" style="justify-content: flex-end; gap: 10px; background-color: #2F2F2F;">
+                <button class="btn btn-secondary" id="btn-cancel-sim">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-sim">
+                    <i class="fa-solid fa-check"></i> Solicitar Aprobación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRIFT MODAL -->
+    <div id="drift-modal" class="deploy-console-overlay hidden" style="z-index: 1100;">
+        <div class="deploy-console" style="height: auto; max-height: 80vh;">
+            <div class="console-header" style="background-color: #2F2F2F;">
+                <div class="console-header-left">
+                    <span class="console-status-icon" style="color: var(--neon-purple);">
+                        <i class="fa-solid fa-code-compare"></i>
+                    </span>
+                    <div>
+                        <div class="console-title">Reporte de Desviaciones (Drift)</div>
+                        <div class="console-subtitle" id="drift-subtitle">Diferencias entre el repositorio y el tenant</div>
+                    </div>
+                </div>
+                <div class="console-header-right">
+                    <button class="btn btn-close" id="btn-close-drift" title="Cerrar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="console-body" id="drift-body" style="background-color: var(--bg-primary); padding: 20px;">
+                <!-- Drift Results Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="/static/js/app.js?v=7"></script>
+</body>
+</html>

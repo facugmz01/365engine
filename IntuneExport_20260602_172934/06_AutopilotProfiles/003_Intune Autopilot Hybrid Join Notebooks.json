@@ -1,0 +1,49 @@
+{
+  "lastModifiedDateTime": "2026-04-07T15:36:33.2917727Z",
+  "roleScopeTagIds": [
+    "0"
+  ],
+  "locale": "os-default",
+  "@odata.type": "#microsoft.graph.activeDirectoryWindowsAutopilotDeploymentProfile",
+  "deviceType": "windowsPc",
+  "outOfBoxExperienceSetting": {
+    "privacySettingsHidden": true,
+    "keyboardSelectionPageSkipped": true,
+    "userType": "standard",
+    "deviceUsageType": "singleUser",
+    "eulaHidden": true,
+    "escapeLinkHidden": true
+  },
+  "hardwareHashExtractionEnabled": false,
+  "enrollmentStatusScreenSettings": null,
+  "deviceNameTemplate": "",
+  "extractHardwareHash": false,
+  "managementServiceAppId": null,
+  "enableWhiteGlove": false,
+  "id": "b517dee4-5e31-4da0-96ce-9a9defcc1a69",
+  "createdDateTime": "2026-04-07T15:36:33.2917727Z",
+  "preprovisioningAllowed": false,
+  "displayName": "Intune Autopilot Hybrid Join Notebooks",
+  "hybridAzureADJoinSkipConnectivityCheck": false,
+  "outOfBoxExperienceSettings": {
+    "skipKeyboardSelectionPage": true,
+    "hidePrivacySettings": true,
+    "hideEULA": true,
+    "userType": "standard",
+    "deviceUsageType": "singleUser",
+    "hideEscapeLink": true
+  },
+  "description": "",
+  "language": "os-default",
+  "_assignments": {
+    "target": {
+      "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+      "deviceAndAppManagementAssignmentFilterId": null,
+      "groupId": "c6c48e0f-64f8-4e98-957f-a8470c823a20",
+      "deviceAndAppManagementAssignmentFilterType": "none"
+    },
+    "sourceId": "b517dee4-5e31-4da0-96ce-9a9defcc1a69",
+    "id": "b517dee4-5e31-4da0-96ce-9a9defcc1a69_c6c48e0f-64f8-4e98-957f-a8470c823a20_0",
+    "source": "direct"
+  }
+}

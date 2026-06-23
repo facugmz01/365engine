@@ -1,0 +1,84 @@
+{
+  "templateId": null,
+  "modifiedDateTime": "2023-03-28T18:57:10.7077717Z",
+  "deletedDateTime": null,
+  "grantControls": {
+    "builtInControls": [],
+    "operator": "OR",
+    "authenticationStrength@odata.context": "https://graph.microsoft.com/v1.0/$metadata#identity/conditionalAccess/policies('d62a0a3f-bad7-40e3-8e92-5a4e453d696a')/grantControls/authenticationStrength/$entity",
+    "termsOfUse": [],
+    "authenticationStrength": {
+      "requirementsSatisfied": "mfa",
+      "modifiedDateTime": "2021-12-01T08:00:00Z",
+      "policyType": "builtIn",
+      "description": "Combinations of methods that satisfy strong authentication, such as a password + SMS",
+      "combinationConfigurations@odata.context": "https://graph.microsoft.com/v1.0/$metadata#identity/conditionalAccess/policies('d62a0a3f-bad7-40e3-8e92-5a4e453d696a')/grantControls/authenticationStrength/combinationConfigurations",
+      "createdDateTime": "2021-12-01T08:00:00Z",
+      "combinationConfigurations": [],
+      "allowedCombinations": [
+        "windowsHelloForBusiness",
+        "fido2",
+        "x509CertificateMultiFactor",
+        "deviceBasedPush",
+        "temporaryAccessPassOneTime",
+        "temporaryAccessPassMultiUse",
+        "password,microsoftAuthenticatorPush",
+        "password,softwareOath",
+        "password,hardwareOath",
+        "password,sms",
+        "password,voice",
+        "federatedMultiFactor",
+        "microsoftAuthenticatorPush,federatedSingleFactor",
+        "softwareOath,federatedSingleFactor",
+        "hardwareOath,federatedSingleFactor",
+        "sms,federatedSingleFactor",
+        "voice,federatedSingleFactor"
+      ],
+      "displayName": "Multifactor authentication",
+      "id": "00000000-0000-0000-0000-000000000002"
+    },
+    "customAuthenticationFactors": []
+  },
+  "state": "enabled",
+  "sessionControls": null,
+  "createdDateTime": "2023-03-28T14:17:40.4587797Z",
+  "conditions": {
+    "clientAppTypes": [
+      "all"
+    ],
+    "users": {
+      "includeGroups": [],
+      "excludeUsers": [],
+      "excludeRoles": [],
+      "excludeGroups": [],
+      "includeRoles": [],
+      "includeUsers": [
+        "All"
+      ],
+      "excludeGuestsOrExternalUsers": null,
+      "includeGuestsOrExternalUsers": null
+    },
+    "clientApplications": null,
+    "insiderRiskLevels": null,
+    "servicePrincipalRiskLevels": [],
+    "applications": {
+      "includeApplications": [
+        "All"
+      ],
+      "excludeApplications": [],
+      "applicationFilter": null,
+      "includeUserActions": [],
+      "includeAuthenticationContextClassReferences": []
+    },
+    "locations": null,
+    "platforms": null,
+    "authenticationFlows": null,
+    "signInRiskLevels": [],
+    "userRiskLevels": [
+      "high"
+    ],
+    "devices": null
+  },
+  "displayName": "Directiva de Bloqueo - Riesgo de usuario",
+  "id": "d62a0a3f-bad7-40e3-8e92-5a4e453d696a"
+}

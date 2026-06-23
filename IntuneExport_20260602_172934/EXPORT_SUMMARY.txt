@@ -1,0 +1,28 @@
+====================================================================
+  RESUMEN DE EXPORTACION - INTUNE
+  Fecha:  2026-06-02 17:30:59
+  Tenant: 52ab5d01-3592-4048-8083-e74652c38e34
+  Cuenta: licencias.software@faselectricidad.com.ar
+  Ruta:   C:\Users\facundo.gomez\Downloads\intune_export\IntuneExport_20260602_172934
+====================================================================
+
+Categoria                                     Elementos Estado
+---------                                     --------- ------
+Settings Catalog Policies                            13 OK
+Device Configuration Profiles                         3 OK
+Compliance Policies                                   4 OK
+Endpoint Security Policies (Intents)                  0 OK
+Conditional Access Policies                           6 OK
+Autopilot Deployment Profiles                         4 OK
+Enrollment Configurations (ESP, Restrictions)         6 OK
+PowerShell Scripts                                    0 ERROR: Response status code does not indicate success: Forbidden (Forbidden).
+Proactive Remediations (Health Scripts)               0 ERROR: Response status code does not indicate success: Forbidden (Forbidden).
+App Protection Policies                               0 OK
+App Configuration Policies                            0 OK
+Assignment Filters                                    0 OK
+Administrative Templates (Group Policy)               1 OK
+Windows Update Rings                                  0 OK
+
+
+Total: 37 elementos
+

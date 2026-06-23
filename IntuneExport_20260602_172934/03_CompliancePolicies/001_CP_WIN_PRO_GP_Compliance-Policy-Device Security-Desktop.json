@@ -1,0 +1,73 @@
+{
+  "passwordExpirationDays": null,
+  "passwordPreviousPasswordBlockCount": null,
+  "roleScopeTagIds": [
+    "0"
+  ],
+  "osMinimumVersion": null,
+  "signatureOutOfDate": false,
+  "passwordRequiredToUnlockFromIdle": false,
+  "wslDistributions": [],
+  "antiSpywareRequired": true,
+  "passwordRequiredType": "deviceDefault",
+  "virtualizationBasedSecurityEnabled": false,
+  "tpmRequired": false,
+  "deviceCompliancePolicyScript": null,
+  "codeIntegrityEnabled": false,
+  "memoryIntegrityEnabled": false,
+  "passwordBlockSimple": false,
+  "lastModifiedDateTime": "2026-04-08T12:32:48.1354995Z",
+  "requireHealthyDeviceReport": false,
+  "activeFirewallRequired": true,
+  "secureBootEnabled": false,
+  "firmwareProtectionEnabled": false,
+  "defenderEnabled": false,
+  "osMaximumVersion": null,
+  "version": 1,
+  "deviceThreatProtectionRequiredSecurityLevel": "unavailable",
+  "id": "0db06823-f2db-4e40-bc80-e21d8fd48c12",
+  "mobileOsMaximumVersion": null,
+  "@odata.type": "#microsoft.graph.windows10CompliancePolicy",
+  "defenderVersion": null,
+  "validOperatingSystemBuildRanges": [],
+  "passwordRequired": false,
+  "mobileOsMinimumVersion": null,
+  "passwordMinutesOfInactivityBeforeLock": null,
+  "storageRequireEncryption": false,
+  "displayName": "CP_WIN_PRO_GP_Compliance-Policy-Device Security-Desktop",
+  "deviceThreatProtectionEnabled": false,
+  "configurationManagerComplianceRequired": false,
+  "description": null,
+  "passwordMinimumCharacterSetCount": null,
+  "passwordMinimumLength": null,
+  "earlyLaunchAntiMalwareDriverEnabled": false,
+  "rtpEnabled": false,
+  "bitLockerEnabled": false,
+  "antivirusRequired": true,
+  "kernelDmaProtectionEnabled": false,
+  "createdDateTime": "2026-04-08T12:32:48.1354995Z",
+  "_assignments": [
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "febb915c-d1a5-4bc5-a83f-122ffc36de22",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "0db06823-f2db-4e40-bc80-e21d8fd48c12",
+      "id": "0db06823-f2db-4e40-bc80-e21d8fd48c12_febb915c-d1a5-4bc5-a83f-122ffc36de22",
+      "source": "direct"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "sourceId": "0db06823-f2db-4e40-bc80-e21d8fd48c12",
+      "id": "0db06823-f2db-4e40-bc80-e21d8fd48c12_1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+      "source": "direct"
+    }
+  ]
+}

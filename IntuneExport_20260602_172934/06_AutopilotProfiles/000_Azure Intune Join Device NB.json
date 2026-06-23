@@ -1,0 +1,48 @@
+{
+  "lastModifiedDateTime": "2026-04-07T15:33:09.7362483Z",
+  "roleScopeTagIds": [
+    "0"
+  ],
+  "locale": "os-default",
+  "@odata.type": "#microsoft.graph.azureADWindowsAutopilotDeploymentProfile",
+  "deviceType": "windowsPc",
+  "outOfBoxExperienceSetting": {
+    "privacySettingsHidden": true,
+    "keyboardSelectionPageSkipped": true,
+    "userType": "standard",
+    "deviceUsageType": "singleUser",
+    "eulaHidden": true,
+    "escapeLinkHidden": true
+  },
+  "hardwareHashExtractionEnabled": false,
+  "enrollmentStatusScreenSettings": null,
+  "deviceNameTemplate": "",
+  "extractHardwareHash": false,
+  "managementServiceAppId": null,
+  "enableWhiteGlove": false,
+  "id": "63dfc248-035f-4de4-9358-4330a030e13e",
+  "createdDateTime": "2026-04-07T15:33:09.7362483Z",
+  "preprovisioningAllowed": false,
+  "displayName": "Azure Intune Join Device NB",
+  "outOfBoxExperienceSettings": {
+    "skipKeyboardSelectionPage": true,
+    "hidePrivacySettings": true,
+    "hideEULA": true,
+    "userType": "standard",
+    "deviceUsageType": "singleUser",
+    "hideEscapeLink": true
+  },
+  "description": "",
+  "language": "os-default",
+  "_assignments": {
+    "target": {
+      "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+      "deviceAndAppManagementAssignmentFilterId": null,
+      "groupId": "339362e3-0dd3-4b3f-af3c-9d7822d3742f",
+      "deviceAndAppManagementAssignmentFilterType": "none"
+    },
+    "sourceId": "63dfc248-035f-4de4-9358-4330a030e13e",
+    "id": "63dfc248-035f-4de4-9358-4330a030e13e_339362e3-0dd3-4b3f-af3c-9d7822d3742f_0",
+    "source": "direct"
+  }
+}

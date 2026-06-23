@@ -1,0 +1,32 @@
+{
+  "id": "348d9e06-565d-47f9-8740-5b8a391f285e",
+  "displayName": "CP_WIN_PRO_GP_Windows-Hybrid-Domain-Join-Configuration-Profile-Desktop_D",
+  "activeDirectoryDomainName": "ds.faselectricidad.com.ar",
+  "deviceManagementApplicabilityRuleOsVersion": null,
+  "computerNameStaticPrefix": "PC-051-",
+  "computerNameSuffixRandomCharCount": 8,
+  "roleScopeTagIds": [
+    "0"
+  ],
+  "deviceManagementApplicabilityRuleDeviceMode": null,
+  "version": 1,
+  "lastModifiedDateTime": "2026-04-07T18:09:33.0034193Z",
+  "description": null,
+  "supportsScopeTags": true,
+  "deviceManagementApplicabilityRuleOsEdition": null,
+  "@odata.type": "#microsoft.graph.windowsDomainJoinConfiguration",
+  "createdDateTime": "2026-04-07T18:09:33.0034193Z",
+  "organizationalUnit": "OU=Autopilot_Domain_Join_Desktop,OU=Workstation,DC=ds,DC=faselectricidad,DC=com,DC=ar",
+  "_assignments": {
+    "intent": "apply",
+    "sourceId": "348d9e06-565d-47f9-8740-5b8a391f285e",
+    "id": "348d9e06-565d-47f9-8740-5b8a391f285e_1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+    "target": {
+      "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+      "deviceAndAppManagementAssignmentFilterId": null,
+      "groupId": "1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+      "deviceAndAppManagementAssignmentFilterType": "none"
+    },
+    "source": "direct"
+  }
+}

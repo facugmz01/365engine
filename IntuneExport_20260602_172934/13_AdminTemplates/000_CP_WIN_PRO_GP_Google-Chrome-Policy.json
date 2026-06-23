@@ -1,0 +1,158 @@
+{
+  "definitionValues": [
+    {
+      "definition": {
+        "policyType": "admxIngested",
+        "classType": "machine",
+        "minUserCspVersion": null,
+        "groupPolicyCategoryId": "8ae11dd1-8bec-47e3-85bb-a34a6db7f221",
+        "hasRelatedDefinitions": false,
+        "version": null,
+        "lastModifiedDateTime": "0001-01-01T00:00:00Z",
+        "displayName": "Allow installation default",
+        "id": "22d8b383-d8af-451e-ab49-6f3f93fda217",
+        "supportedOn": "At least Google Update 1.2.145.5",
+        "explainText": "Specifies the default behavior for whether Google software can be installed using Google Update/Google Installer.\r\n\r\nCan be overridden by the \"Allow installation\" for individual applications.\r\n\r\nOnly affects installation of Google software using Google Update/Google Installer. Cannot prevent running the application installer directly or installation of Google software that does not use Google Update/Google Installer for installation.\r\n\r\nThis policy is available only on Windows instances that are joined to a Microsoft® Active Directory® domain.",
+        "minDeviceCspVersion": "5.0",
+        "categoryPath": "\\Google\\Google Update\\Applications"
+      },
+      "lastModifiedDateTime": "2026-04-16T18:17:48.7075843Z",
+      "createdDateTime": "2026-04-16T18:17:48.6777551Z",
+      "enabled": true,
+      "id": "7b05656f-a4ee-4e96-aa61-d635ccf9e964",
+      "configurationType": "policy"
+    },
+    {
+      "definition": {
+        "policyType": "admxIngested",
+        "classType": "machine",
+        "minUserCspVersion": null,
+        "groupPolicyCategoryId": "2993a47b-3580-41db-80c0-c95519cdcd2c",
+        "hasRelatedDefinitions": false,
+        "version": null,
+        "lastModifiedDateTime": "0001-01-01T00:00:00Z",
+        "displayName": "Update policy override",
+        "id": "37e7d602-3c92-42a3-b8bd-7343789adfa9",
+        "supportedOn": "At least Google Update 1.2.145.5",
+        "explainText": "Specifies how Google Update handles available Google Chrome updates from Google.\r\n\r\nIf this policy is not configured, Google Update handles available updates as specified by \"Update policy override default\".\r\n\r\nOptions:\r\n - Always allow updates: Updates are always applied when found, either by periodic update check or by a manual update check.\r\n - Manual updates only: Updates are only applied when the user does a manual update check. (Not all apps provide an interface  for this.)\r\n - Automatic silent updates only: Updates are only applied when they are found via the periodic update check.\r\n - Updates disabled: Never apply updates.\r\n\r\nIf you select manual updates, you should periodically check for updates using the application's manual update mechanism if available. If you disable updates, you should periodically check for updates and distribute them to users. Check https://www.google.com/chrome/.\r\n\r\nThis policy is available only on Windows instances that are joined to a Microsoft® Active Directory® domain.",
+        "minDeviceCspVersion": "5.0",
+        "categoryPath": "\\Google\\Google Update\\Applications\\Google Chrome"
+      },
+      "lastModifiedDateTime": "2026-04-16T13:45:44.6629755Z",
+      "createdDateTime": "2026-04-16T13:45:44.5766332Z",
+      "enabled": true,
+      "id": "43a506c0-9f1d-4b1b-93c9-8041f778648d",
+      "configurationType": "policy"
+    },
+    {
+      "definition": {
+        "policyType": "admxIngested",
+        "classType": "machine",
+        "minUserCspVersion": null,
+        "groupPolicyCategoryId": "8ae11dd1-8bec-47e3-85bb-a34a6db7f221",
+        "hasRelatedDefinitions": false,
+        "version": null,
+        "lastModifiedDateTime": "0001-01-01T00:00:00Z",
+        "displayName": "Update policy override default",
+        "id": "9257f9c6-179a-4ba8-91e4-91b510c2d6d4",
+        "supportedOn": "At least Google Update 1.2.145.5",
+        "explainText": "Specifies the default policy for software updates from Google.\r\n\r\nCan be overridden by the \"Update policy override\" for individual applications.\r\n\r\nOptions:\r\n - Always allow updates: Updates are always applied when found, either by periodic update check or by a manual update check.\r\n - Manual updates only: Updates are only applied when the user does a manual update check. (Not all apps provide an interface for this.)\r\n - Automatic silent updates only: Updates are only applied when they are found via the periodic update check.\r\n - Updates disabled: Never apply updates.\r\n\r\nIf you select manual updates, you should periodically check for updates using each application's manual update mechanism if available. If you disable updates, you should periodically check for updates and distribute them to users.\r\n\r\nOnly affects updates for Google software that uses Google Update for updates. Does not prevent auto-updates of Google software that does not use Google Update for updates.\r\n\r\nUpdates for Google Update are not affected by this setting; Google Update will continue to update itself while it is installed.\r\n\r\nWARNING: Disabing updates will also prevent updates of any new Google applications released in the future, possibly including dependencies for future versions of installed applications.\r\n\r\nThis policy is available only on Windows instances that are joined to a Microsoft® Active Directory® domain.",
+        "minDeviceCspVersion": "5.0",
+        "categoryPath": "\\Google\\Google Update\\Applications"
+      },
+      "lastModifiedDateTime": "2026-04-16T18:17:48.7243844Z",
+      "createdDateTime": "2026-04-16T18:17:48.6777551Z",
+      "enabled": true,
+      "id": "0a51d9dd-ab44-45aa-adda-695a6f752acf",
+      "configurationType": "policy"
+    },
+    {
+      "definition": {
+        "policyType": "admxIngested",
+        "classType": "machine",
+        "minUserCspVersion": null,
+        "groupPolicyCategoryId": "197c4ddf-a032-4bb8-a80c-d92303a5ac06",
+        "hasRelatedDefinitions": false,
+        "version": null,
+        "lastModifiedDateTime": "0001-01-01T00:00:00Z",
+        "displayName": "Auto-update check period override",
+        "id": "90cd7341-f65f-44c5-bdc9-b26b2644c3fc",
+        "supportedOn": "At least Google Update 1.2.145.5",
+        "explainText": "Minimum number of minutes between automatic update checks.\r\n\r\nSet this policy to the value 0 to disable all periodic network traffic by Google Update. This is not recommended, as it prevents Google Update itself from receiving stability and security updates.\r\n\r\nThe \"Update policy override default\" and per-application \"Update policy override\" settings should be used to manage application updates rather than this setting.\r\n\r\nThis policy is available only on Windows instances that are joined to a Microsoft® Active Directory® domain.",
+        "minDeviceCspVersion": "5.0",
+        "categoryPath": "\\Google\\Google Update\\Preferences"
+      },
+      "lastModifiedDateTime": "2026-04-16T13:45:44.7048471Z",
+      "createdDateTime": "2026-04-16T13:45:44.6085245Z",
+      "enabled": true,
+      "id": "42e87b10-0f8d-45c2-933c-616aaf7ebb49",
+      "configurationType": "policy"
+    },
+    {
+      "definition": {
+        "policyType": "admxIngested",
+        "classType": "machine",
+        "minUserCspVersion": null,
+        "groupPolicyCategoryId": "2993a47b-3580-41db-80c0-c95519cdcd2c",
+        "hasRelatedDefinitions": false,
+        "version": null,
+        "lastModifiedDateTime": "0001-01-01T00:00:00Z",
+        "displayName": "Allow installation",
+        "id": "b0a55dbb-5fdf-4edb-944a-d2b6a615cdb7",
+        "supportedOn": "At least Google Update 1.2.145.5",
+        "explainText": "Specifies whether Google Chrome can be installed using Google Update/Google Installer.\r\n\r\nIf this policy is not configured, Google Chrome can be installed as specified by \"Allow installation default\".\r\n\r\nForce Installs (Machine-Wide): Allows Deploying Google Chrome to all machines where Google Update is pre-installed. Requires Google Update 1.3.36.82 or higher.\r\n\r\nForce Installs (Per-User): Allows Deploying Google Chrome on a Per-User basis to all machines where Google Update is pre-installed Per-User. Requires Google Update 1.3.36.82 or higher.\r\n\r\nThis policy is available only on Windows instances that are joined to a Microsoft® Active Directory® domain.",
+        "minDeviceCspVersion": "5.0",
+        "categoryPath": "\\Google\\Google Update\\Applications\\Google Chrome"
+      },
+      "lastModifiedDateTime": "2026-04-16T13:45:44.6352965Z",
+      "createdDateTime": "2026-04-16T13:45:44.5842799Z",
+      "enabled": true,
+      "id": "0410c1ac-6bcc-4bfa-8029-326aaf7acf93",
+      "configurationType": "policy"
+    }
+  ],
+  "description": "",
+  "displayName": "CP_WIN_PRO_GP_Google-Chrome-Policy",
+  "assignments": [
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "339362e3-0dd3-4b3f-af3c-9d7822d3742f",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "id": "35554c93-1a8e-40df-bee4-c99f577cadf7_339362e3-0dd3-4b3f-af3c-9d7822d3742f",
+      "lastModifiedDateTime": "2026-04-16T18:17:48.8064395Z"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "c6c48e0f-64f8-4e98-957f-a8470c823a20",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "id": "35554c93-1a8e-40df-bee4-c99f577cadf7_c6c48e0f-64f8-4e98-957f-a8470c823a20",
+      "lastModifiedDateTime": "2026-04-16T18:17:48.8064395Z"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "id": "35554c93-1a8e-40df-bee4-c99f577cadf7_1f6f0ccb-799d-4f23-aeb7-25e874f23074",
+      "lastModifiedDateTime": "2026-04-16T18:17:48.8064395Z"
+    },
+    {
+      "target": {
+        "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+        "deviceAndAppManagementAssignmentFilterId": null,
+        "groupId": "febb915c-d1a5-4bc5-a83f-122ffc36de22",
+        "deviceAndAppManagementAssignmentFilterType": "none"
+      },
+      "id": "35554c93-1a8e-40df-bee4-c99f577cadf7_febb915c-d1a5-4bc5-a83f-122ffc36de22",
+      "lastModifiedDateTime": "2026-04-16T18:17:48.8064395Z"
+    }
+  ]
+}
