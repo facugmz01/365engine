@@ -14,15 +14,16 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     wget \
     apt-transport-https \
+    libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PowerShell
-RUN wget -q "https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb" \
-    && dpkg -i packages-microsoft-prod.deb \
-    && apt-get update \
-    && apt-get install -y powershell \
-    && rm packages-microsoft-prod.deb \
-    && rm -rf /var/lib/apt/lists/*
+# Install PowerShell manually to bypass Microsoft Repo GPG issues on modern Debian
+RUN wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.2/powershell-7.4.2-linux-x64.tar.gz \
+    && mkdir -p /opt/microsoft/powershell/7 \
+    && tar zxf powershell-7.4.2-linux-x64.tar.gz -C /opt/microsoft/powershell/7 \
+    && chmod +x /opt/microsoft/powershell/7/pwsh \
+    && ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh \
+    && rm powershell-7.4.2-linux-x64.tar.gz
 
 # Install python dependencies
 COPY requirements.txt .
