@@ -32,7 +32,7 @@ class GraphAPIClient:
     Handles authentication headers, request timeouts, automated pagination, and 429 Throttling retries.
     """
 
-    BASE_URL = "https://graph.microsoft.com/v1.0"
+    BASE_URL = "https://graph.microsoft.com/beta"
 
     def __init__(
         self,
