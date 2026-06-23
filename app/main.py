@@ -84,7 +84,8 @@ app = FastAPI(
 
 # Mount static files folder (React Build)
 import os
-dist_path = "c:/intune_export/frontend/dist"
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dist_path = os.path.join(base_dir, "frontend", "dist")
 assets_path = os.path.join(dist_path, "assets")
 
 # We mount /assets specifically so it matches Vite's default build output
