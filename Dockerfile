@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     wget \
     apt-transport-https \
-    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
