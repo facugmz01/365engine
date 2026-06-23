@@ -25,6 +25,7 @@ export default function TenantDetail() {
 
   // Modal state
   const [showCredModal, setShowCredModal] = useState(false);
+  const [authType, setAuthType] = useState('application');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -77,9 +78,20 @@ export default function TenantDetail() {
     try {
       // Backend: POST /api/v1/organizations/{org_id}/credentials
       await apiClient.post(`/organizations/${orgDetails.id}/credentials`, {
+        auth_type: authType,
         client_id: clientId,
         client_secret: clientSecret,
       });
+      
+      if (authType === 'delegated') {
+        const redirectUri = window.location.origin + '/oauth/callback';
+        const urlResponse = await apiClient.get(`/organizations/${orgDetails.id}/auth/url?redirect_uri=${encodeURIComponent(redirectUri)}`);
+        // We save the org ID in localStorage to associate the callback
+        localStorage.setItem('oauth_org_id', orgDetails.id);
+        window.location.href = urlResponse.data.url;
+        return;
+      }
+      
       setShowCredModal(false);
       setClientId('');
       setClientSecret('');
@@ -343,6 +355,34 @@ export default function TenantDetail() {
             </h3>
 
             <form onSubmit={handleSaveCredentials} className="space-y-4">
+              <div className="bg-bg-deep p-3 rounded-lg border border-border-color space-y-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">Tipo de Autenticación</label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="authType" 
+                      value="application" 
+                      checked={authType === 'application'} 
+                      onChange={() => setAuthType('application')}
+                      className="text-accent-blue focus:ring-accent-blue"
+                    />
+                    <span className="text-sm text-text-secondary">Aplicación (Recomendado) - Solo lectura</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="authType" 
+                      value="delegated" 
+                      checked={authType === 'delegated'} 
+                      onChange={() => setAuthType('delegated')}
+                      className="text-accent-blue focus:ring-accent-blue"
+                    />
+                    <span className="text-sm text-text-secondary">Delegada (Avanzado) - Permite modificar configuraciones</span>
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Application (Client) ID</label>
                 <input
@@ -379,7 +419,7 @@ export default function TenantDetail() {
                   disabled={isSaving}
                   className="px-4 py-2 bg-accent-blue text-white text-sm font-medium rounded-lg hover:bg-accent-blue/90 disabled:opacity-50 transition-colors"
                 >
-                  {isSaving ? 'Guardando...' : 'Guardar'}
+                  {isSaving ? 'Guardando...' : (authType === 'delegated' ? 'Guardar e Iniciar Sesión' : 'Guardar')}
                 </button>
               </div>
             </form>

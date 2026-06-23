@@ -4,13 +4,10 @@ from app.services.graph_agent import GraphAPIClient
 
 logger = logging.getLogger("tenant_validator")
 
-async def validate_tenant_readiness(client: GraphAPIClient) -> Dict[str, Any]:
+async def validate_tenant_readiness(client: GraphAPIClient, use_delegated: bool = False) -> Dict[str, Any]:
     """
-    Performs pre-validations on the target tenant:
-    1. Check licenses compatibility (M365 / Intune / Defender).
-    2. Check subscription state of Intune.
-    3. Check Defender ATP connector status.
-    4. Check Intune diagnostics and license validation settings.
+    Validates that a tenant has the required Intune and Entra ID licenses, 
+    active subscriptions, and basic prerequisites for endpoint management policies.
     """
     results = {
         "valid": True,
@@ -103,28 +100,38 @@ async def validate_tenant_readiness(client: GraphAPIClient) -> Dict[str, Any]:
 
     # 4. Check Intune Diagnostics & License Validation Settings
     try:
-        # Check Windows data processor configuration
-        device_mgmt = await client.get_resource("deviceManagement?$select=dataProcessorServiceForWindowsFeaturesOnboarding")
-        processor_config = device_mgmt.get("dataProcessorServiceForWindowsFeaturesOnboarding", {})
-        
-        is_processor_enabled = processor_config.get("areDataProcessorServiceForWindowsFeaturesEnabled", False)
-        is_license_valid = processor_config.get("hasValidWindowsLicense", False)
-        
-        if is_processor_enabled and is_license_valid:
+        if use_delegated:
+            # Check Windows data processor configuration via Delegated Graph API
+            device_mgmt = await client.get_resource("deviceManagement?$select=dataProcessorServiceForWindowsFeaturesOnboarding")
+            processor_config = device_mgmt.get("dataProcessorServiceForWindowsFeaturesOnboarding", {})
+            
+            is_processor_enabled = processor_config.get("areDataProcessorServiceForWindowsFeaturesEnabled", False)
+            is_license_valid = processor_config.get("hasValidWindowsLicense", False)
+            
+            if is_processor_enabled and is_license_valid:
+                results["details"]["intune_diagnostics"] = {
+                    "status": "passed",
+                    "message": "Datos de diagnóstico de Windows y Comprobación de licencias están activados."
+                }
+            else:
+                results["details"]["intune_diagnostics"] = {
+                    "status": "warning",
+                    "message": "Datos de diagnóstico de Windows o Comprobación de licencias están desactivados. Se activarán automáticamente durante la exportación."
+                }
+        else:
+            # Revert back to audit events check or just a basic deviceManagement check
+            # Microsoft Graph blocks Application tokens from reading dataProcessorServiceForWindowsFeaturesOnboarding
+            await client.get_resource("deviceManagement")
+            
             results["details"]["intune_diagnostics"] = {
                 "status": "passed",
-                "message": "Datos de diagnóstico de Windows y Comprobación de licencias están activados."
-            }
-        else:
-            results["details"]["intune_diagnostics"] = {
-                "status": "warning",
-                "message": "Datos de diagnóstico de Windows o Comprobación de licencias están desactivados. Se activarán automáticamente durante la exportación."
+                "message": "Conexión con Intune establecida. (NOTA: Recuerda activar manualmente los 'Datos de Diagnóstico de Windows' en Tenant Admin > Windows Data, ya que Microsoft bloquea esto en modo Aplicación)."
             }
     except Exception as e:
-        logger.warning(f"Failed to access deviceManagement processor settings: {e}")
+        logger.warning(f"Failed to access deviceManagement: {e}")
         results["details"]["intune_diagnostics"] = {
             "status": "warning",
-            "message": f"No se pudo verificar la configuración de datos de Windows: {e}"
+            "message": f"No se pudo acceder a las configuraciones de Intune: {e}"
         }
 
     return results

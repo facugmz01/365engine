@@ -339,6 +339,7 @@ async def create_credentials(
 
     db_cred = AppCredential(
         organization_id=org_id,
+        auth_type=payload.auth_type,
         client_id=payload.client_id,
         client_secret=payload.client_secret  # Property setter handles encryption
     )
@@ -347,6 +348,69 @@ async def create_credentials(
     await db.commit()
     await db.refresh(db_cred)
     return db_cred
+
+@app.get(
+    "/api/v1/organizations/{org_id}/auth/url",
+    tags=["Credentials"]
+)
+async def get_delegated_auth_url(
+    org_id: uuid.UUID,
+    redirect_uri: str,
+    db: AsyncSession = Depends(get_db_session)
+) -> Dict[str, str]:
+    """
+    Returns the Microsoft authorization URL for Delegated authentication.
+    """
+    org_stmt = select(Organization).where(Organization.id == org_id).options(selectinload(Organization.credentials))
+    org_result = await db.execute(org_stmt)
+    org = org_result.scalar_one_or_none()
+    
+    if not org or not org.credentials:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization or credentials not found")
+        
+    cred = org.credentials[0]
+    from app.services.auth_agent import get_delegated_auth_url as build_auth_url
+    url = build_auth_url(cred.client_id, cred.client_secret, org.tenant_id, redirect_uri)
+    return {"url": url}
+
+class AuthCallbackRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+@app.post(
+    "/api/v1/organizations/{org_id}/auth/callback",
+    tags=["Credentials"]
+)
+async def delegated_auth_callback(
+    org_id: uuid.UUID,
+    payload: AuthCallbackRequest,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Exchanges the authorization code for tokens and saves the refresh_token.
+    """
+    org_stmt = select(Organization).where(Organization.id == org_id).options(selectinload(Organization.credentials))
+    org_result = await db.execute(org_stmt)
+    org = org_result.scalar_one_or_none()
+    
+    if not org or not org.credentials:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization or credentials not found")
+        
+    cred = org.credentials[0]
+    from app.services.auth_agent import acquire_delegated_token
+    
+    try:
+        result = await acquire_delegated_token(cred.client_id, cred.client_secret, org.tenant_id, payload.redirect_uri, payload.code)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        
+    if "refresh_token" in result:
+        cred.refresh_token = result["refresh_token"]
+        cred.auth_type = "delegated"
+        await db.commit()
+        return {"status": "success", "message": "Tokens acquired and saved."}
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No refresh token returned by Microsoft.")
 
 
 # ==========================================
@@ -1264,13 +1328,25 @@ async def validate_organization_readiness(
 
     cred = org.credentials[0]
     try:
-        access_token = await auth_agent.get_access_token(
-            tenant_id=org.tenant_id,
-            client_id=cred.client_id,
-            client_secret=cred.client_secret
-        )
+        from app.services.auth_agent import auth_agent
+        if cred.auth_type == "delegated":
+            if not cred.refresh_token:
+                raise HTTPException(status_code=400, detail="Delegated Auth is selected but no user has authorized it. Please sign in to Microsoft first.")
+            from app.services.auth_agent import refresh_delegated_token
+            token_res = await refresh_delegated_token(cred.client_id, cred.client_secret, org.tenant_id, cred.refresh_token)
+            if "refresh_token" in token_res:
+                cred.refresh_token = token_res["refresh_token"]
+                await db.commit()
+            access_token = token_res["access_token"]
+        else:
+            access_token = await auth_agent.get_access_token(
+                tenant_id=org.tenant_id,
+                client_id=cred.client_id,
+                client_secret=cred.client_secret
+            )
+            
         client = GraphAPIClient(access_token=access_token)
-        report = await validate_tenant_readiness(client)
+        report = await validate_tenant_readiness(client, use_delegated=(cred.auth_type == "delegated"))
         return report
     except Exception as e:
         raise HTTPException(

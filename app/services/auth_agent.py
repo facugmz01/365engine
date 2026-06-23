@@ -172,3 +172,40 @@ async def acquire_sso_token(client_id: str, client_secret: str, tenant_id: str, 
     if "error" in result:
         raise TokenAcquisitionException(f"Failed to acquire SSO token: {result.get('error_description')}")
     return result
+
+# ==========================================
+# Delegated Permissions (Intune) Functions
+# ==========================================
+INTUNE_SCOPES = ["offline_access", "DeviceManagementServiceConfig.ReadWrite.All", "DeviceManagementConfiguration.ReadWrite.All", "DeviceManagementManagedDevices.ReadWrite.All"]
+
+def get_delegated_auth_url(client_id: str, client_secret: str, tenant_id: str, redirect_uri: str, state: str = None) -> str:
+    app = build_sso_app(client_id, client_secret, tenant_id)
+    return app.get_authorization_request_url(
+        scopes=INTUNE_SCOPES,
+        state=state,
+        redirect_uri=redirect_uri
+    )
+
+async def acquire_delegated_token(client_id: str, client_secret: str, tenant_id: str, redirect_uri: str, code: str) -> dict:
+    app = build_sso_app(client_id, client_secret, tenant_id)
+    result = await asyncio.to_thread(
+        app.acquire_token_by_authorization_code,
+        code,
+        scopes=INTUNE_SCOPES,
+        redirect_uri=redirect_uri
+    )
+    if "error" in result:
+        raise TokenAcquisitionException(f"Failed to acquire Delegated token: {result.get('error_description')}")
+    return result
+
+async def refresh_delegated_token(client_id: str, client_secret: str, tenant_id: str, refresh_token: str) -> dict:
+    app = build_sso_app(client_id, client_secret, tenant_id)
+    result = await asyncio.to_thread(
+        app.acquire_token_by_refresh_token,
+        refresh_token,
+        scopes=INTUNE_SCOPES
+    )
+    if "error" in result:
+        raise TokenAcquisitionException(f"Failed to refresh Delegated token: {result.get('error_description')}")
+    return result
+

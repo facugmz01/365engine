@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class AppCredentialBase(BaseModel):
     client_id: str = Field(..., min_length=1, max_length=100, description="Microsoft Entra ID Application (Client) ID")
+    auth_type: str = Field("application", description="Authentication type: 'application' or 'delegated'")
 
 
 class AppCredentialCreate(AppCredentialBase):

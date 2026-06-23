@@ -12,12 +12,14 @@ import Users from './pages/Users';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import Assessment from './pages/Assessment';
+import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="tenants" element={<Tenants />} />

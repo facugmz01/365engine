@@ -203,12 +203,24 @@ async def async_run_deployment(job_id: uuid.UUID) -> None:
 
             cred = target_org.credentials[0]
 
-            await append_log(session, job, "INFO", f"Obteniendo token para tenant: {target_org.tenant_id}")
-            access_token = await auth_agent.get_access_token(
-                tenant_id=target_org.tenant_id,
-                client_id=cred.client_id,
-                client_secret=cred.client_secret
-            )
+            await append_log(session, job, "INFO", f"Obteniendo token para tenant: {target_org.tenant_id} (Modo: {cred.auth_type})")
+            
+            if cred.auth_type == "delegated":
+                if not cred.refresh_token:
+                    await append_log(session, job, "ERROR", "Falta el refresh token para la autenticación delegada.")
+                    raise ValueError("No refresh token available. User must authenticate first.")
+                from app.services.auth_agent import refresh_delegated_token
+                token_res = await refresh_delegated_token(cred.client_id, cred.client_secret, target_org.tenant_id, cred.refresh_token)
+                if "refresh_token" in token_res:
+                    cred.refresh_token = token_res["refresh_token"]
+                    await session.commit()
+                access_token = token_res["access_token"]
+            else:
+                access_token = await auth_agent.get_access_token(
+                    tenant_id=target_org.tenant_id,
+                    client_id=cred.client_id,
+                    client_secret=cred.client_secret
+                )
             await append_log(session, job, "SUCCESS", f"Token obtenido correctamente para '{target_org.name}'")
 
             client = GraphAPIClient(access_token=access_token)
@@ -219,7 +231,7 @@ async def async_run_deployment(job_id: uuid.UUID) -> None:
             bypass_validation = params.get("bypass_validation", False)
             if not bypass_validation:
                 await append_log(session, job, "INFO", "Ejecutando validaciones previas del tenant...")
-                validation_results = await validate_tenant_readiness(client)
+                validation_results = await validate_tenant_readiness(client, use_delegated=(cred.auth_type == "delegated"))
                 params["validation_results"] = validation_results
                 job.parameters = params
                 await session.commit()
@@ -235,20 +247,21 @@ async def async_run_deployment(job_id: uuid.UUID) -> None:
             # ==========================================
             # STAGE 0.5: ENSURE WINDOWS DATA PROCESSOR
             # ==========================================
-            await append_log(session, job, "INFO", "Activando opciones de telemetría y licencias de Windows en el inquilino...")
-            try:
-                await client.patch_resource(
-                    "deviceManagement",
-                    payload={
-                        "dataProcessorServiceForWindowsFeaturesOnboarding": {
-                            "areDataProcessorServiceForWindowsFeaturesEnabled": True,
-                            "hasValidWindowsLicense": True
+            if cred.auth_type == "delegated":
+                await append_log(session, job, "INFO", "Activando opciones de telemetría y licencias de Windows en el inquilino...")
+                try:
+                    await client.patch_resource(
+                        "deviceManagement",
+                        payload={
+                            "dataProcessorServiceForWindowsFeaturesOnboarding": {
+                                "areDataProcessorServiceForWindowsFeaturesEnabled": True,
+                                "hasValidWindowsLicense": True
+                            }
                         }
-                    }
-                )
-                await append_log(session, job, "SUCCESS", "Opciones de configuración del procesador de datos de Windows activadas.")
-            except Exception as patch_err:
-                await append_log(session, job, "WARNING", f"No se pudo activar la configuración del procesador de Windows automáticamente: {patch_err}")
+                    )
+                    await append_log(session, job, "SUCCESS", "Opciones de configuración del procesador de datos de Windows activadas.")
+                except Exception as patch_err:
+                    await append_log(session, job, "WARNING", f"No se pudo activar la configuración del procesador de Windows: {patch_err}")
 
             # ==========================================
             # STAGE 1: CREATE / RESOLVE GROUPS
@@ -445,11 +458,22 @@ async def async_run_import(org_id: uuid.UUID, endpoint: str, category: str) -> N
 
         try:
             cred = org.credentials[0]
-            access_token = await auth_agent.get_access_token(
-                tenant_id=org.tenant_id,
-                client_id=cred.client_id,
-                client_secret=cred.client_secret
-            )
+            if cred.auth_type == "delegated":
+                if not cred.refresh_token:
+                    logger.error("No refresh token for delegated auth. Cannot import.")
+                    return
+                from app.services.auth_agent import refresh_delegated_token
+                token_res = await refresh_delegated_token(cred.client_id, cred.client_secret, org.tenant_id, cred.refresh_token)
+                if "refresh_token" in token_res:
+                    cred.refresh_token = token_res["refresh_token"]
+                    await session.commit()
+                access_token = token_res["access_token"]
+            else:
+                access_token = await auth_agent.get_access_token(
+                    tenant_id=org.tenant_id,
+                    client_id=cred.client_id,
+                    client_secret=cred.client_secret
+                )
 
             client = GraphAPIClient(access_token=access_token)
             logger.info(f"Querying resource policies from {endpoint}...")
@@ -575,11 +599,22 @@ async def async_run_rollback(job_id: uuid.UUID) -> None:
         cred = target_org.credentials[0]
         
         try:
-            access_token = await auth_agent.get_access_token(
-                tenant_id=target_org.tenant_id,
-                client_id=cred.client_id,
-                client_secret=cred.client_secret
-            )
+            if cred.auth_type == "delegated":
+                if not cred.refresh_token:
+                    logger.error("No refresh token for delegated auth. Cannot rollback.")
+                    return
+                from app.services.auth_agent import refresh_delegated_token
+                token_res = await refresh_delegated_token(cred.client_id, cred.client_secret, target_org.tenant_id, cred.refresh_token)
+                if "refresh_token" in token_res:
+                    cred.refresh_token = token_res["refresh_token"]
+                    await session.commit()
+                access_token = token_res["access_token"]
+            else:
+                access_token = await auth_agent.get_access_token(
+                    tenant_id=target_org.tenant_id,
+                    client_id=cred.client_id,
+                    client_secret=cred.client_secret
+                )
             client = GraphAPIClient(access_token=access_token)
             
             # Perform rollback
@@ -636,11 +671,22 @@ async def async_run_tcm_snapshot_import(org_id: uuid.UUID, workloads: list[str])
 
         try:
             cred = org.credentials[0]
-            access_token = await auth_agent.get_access_token(
-                tenant_id=org.tenant_id,
-                client_id=cred.client_id,
-                client_secret=cred.client_secret
-            )
+            if cred.auth_type == "delegated":
+                if not cred.refresh_token:
+                    logger.error("No refresh token for delegated auth. Cannot import TCM snapshot.")
+                    return
+                from app.services.auth_agent import refresh_delegated_token
+                token_res = await refresh_delegated_token(cred.client_id, cred.client_secret, org.tenant_id, cred.refresh_token)
+                if "refresh_token" in token_res:
+                    cred.refresh_token = token_res["refresh_token"]
+                    await session.commit()
+                access_token = token_res["access_token"]
+            else:
+                access_token = await auth_agent.get_access_token(
+                    tenant_id=org.tenant_id,
+                    client_id=cred.client_id,
+                    client_secret=cred.client_secret
+                )
 
             client = GraphAPIClient(access_token=access_token)
             
