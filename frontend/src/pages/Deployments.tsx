@@ -23,11 +23,6 @@ interface NewGroup {
   membership_rule: string;
 }
 
-interface TemplateAssignment {
-  template_id: string;
-  assignment_target: 'all_devices' | 'all_users' | 'custom_groups' | 'unassigned';
-  assign_to_groups: string[];
-}
 
 // ── Helper: status badge ───────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
