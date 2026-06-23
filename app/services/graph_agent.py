@@ -185,6 +185,24 @@ class GraphAPIClient:
         except ValueError:
             return {"raw_response": response.text}
 
+    async def patch_resource(self, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Asynchronously updates a resource in Microsoft Graph API (HTTP PATCH).
+        
+        :param endpoint: Graph API endpoint path.
+        :param payload: JSON body dictionary to patch.
+        :return: Decoded JSON response from Microsoft Graph.
+        """
+        response = await self._request_with_retry("PATCH", endpoint, json=payload)
+        
+        if response.status_code == 204 or not response.text:
+            return {}
+            
+        try:
+            return response.json()
+        except ValueError:
+            return {"raw_response": response.text}
+
     async def enrich_policy_payload(self, endpoint: str, policy: Dict[str, Any]) -> None:
         """
         Enriches a policy dictionary with its sub-resources if the Microsoft Graph API 

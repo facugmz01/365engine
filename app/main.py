@@ -1116,6 +1116,8 @@ async def get_org_details(
         "has_credentials": len(org.credentials) > 0,
         "auto_drift_enabled": org.auto_drift_enabled,
         "drift_scan_schedule": org.drift_scan_schedule,
+        "created_at": org.created_at,
+        "updated_at": org.updated_at,
         "deployments": [{"id": str(j.id), "status": j.status, "created_at": j.created_at.isoformat()} for j in jobs],
         "drift_reports": [{"id": str(r.id), "created_at": r.created_at.isoformat(), "drifts_found": r.drifts_found, "source": r.source, "details": r.details} for r in drift_reports]
     }

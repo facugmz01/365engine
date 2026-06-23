@@ -233,6 +233,24 @@ async def async_run_deployment(job_id: uuid.UUID) -> None:
                 await append_log(session, job, "WARNING", "Validaciones previas omitidas por solicitud del usuario (bypass).")
 
             # ==========================================
+            # STAGE 0.5: ENSURE WINDOWS DATA PROCESSOR
+            # ==========================================
+            await append_log(session, job, "INFO", "Activando opciones de telemetría y licencias de Windows en el inquilino...")
+            try:
+                await client.patch_resource(
+                    "deviceManagement",
+                    payload={
+                        "dataProcessorServiceForWindowsFeaturesOnboarding": {
+                            "areDataProcessorServiceForWindowsFeaturesEnabled": True,
+                            "hasValidWindowsLicense": True
+                        }
+                    }
+                )
+                await append_log(session, job, "SUCCESS", "Opciones de configuración del procesador de datos de Windows activadas.")
+            except Exception as patch_err:
+                await append_log(session, job, "WARNING", f"No se pudo activar la configuración del procesador de Windows automáticamente: {patch_err}")
+
+            # ==========================================
             # STAGE 1: CREATE / RESOLVE GROUPS
             # ==========================================
             resolved_groups = {}  # display_name -> id

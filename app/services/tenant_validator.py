@@ -103,17 +103,28 @@ async def validate_tenant_readiness(client: GraphAPIClient) -> Dict[str, Any]:
 
     # 4. Check Intune Diagnostics & License Validation Settings
     try:
-        # Diagnostic settings check or audit events
-        await client.get_resource("deviceManagement/auditEvents")
-        results["details"]["intune_diagnostics"] = {
-            "status": "passed",
-            "message": "Intune diagnostics and audit logs are enabled and accessible."
-        }
+        # Check Windows data processor configuration
+        device_mgmt = await client.get_resource("deviceManagement?$select=dataProcessorServiceForWindowsFeaturesOnboarding")
+        processor_config = device_mgmt.get("dataProcessorServiceForWindowsFeaturesOnboarding", {})
+        
+        is_processor_enabled = processor_config.get("areDataProcessorServiceForWindowsFeaturesEnabled", False)
+        is_license_valid = processor_config.get("hasValidWindowsLicense", False)
+        
+        if is_processor_enabled and is_license_valid:
+            results["details"]["intune_diagnostics"] = {
+                "status": "passed",
+                "message": "Datos de diagnóstico de Windows y Comprobación de licencias están activados."
+            }
+        else:
+            results["details"]["intune_diagnostics"] = {
+                "status": "warning",
+                "message": "Datos de diagnóstico de Windows o Comprobación de licencias están desactivados. Se activarán automáticamente durante la exportación."
+            }
     except Exception as e:
-        logger.warning(f"Failed to access audit/diagnostic logs: {e}")
+        logger.warning(f"Failed to access deviceManagement processor settings: {e}")
         results["details"]["intune_diagnostics"] = {
             "status": "warning",
-            "message": f"Intune diagnostics/audit logs could not be verified: {e}"
+            "message": f"No se pudo verificar la configuración de datos de Windows: {e}"
         }
 
     return results
