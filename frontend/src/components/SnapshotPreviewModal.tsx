@@ -7,9 +7,11 @@ interface SnapshotPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: any[];
+  title?: string;
+  sourceMode?: 'tcm' | 'live';
 }
 
-export default function SnapshotPreviewModal({ isOpen, onClose, data }: SnapshotPreviewModalProps) {
+export default function SnapshotPreviewModal({ isOpen, onClose, data, title = "Vista Previa de Políticas", sourceMode = 'tcm' }: SnapshotPreviewModalProps) {
   const { fetchTemplates } = useStore();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
@@ -41,8 +43,8 @@ export default function SnapshotPreviewModal({ isOpen, onClose, data }: Snapshot
     for (const index of Array.from(selectedIds)) {
       const raw_res = data[index];
       
-      const name = raw_res.displayName || raw_res.name || `TCM Baseline ${index+1}`;
-      const description = raw_res.description || `Imported via TCM preview`;
+      const name = raw_res.displayName || raw_res.name || `Baseline ${index+1}`;
+      const description = raw_res.description || `Imported policy`;
       const endpoint_path = raw_res.resourceType || raw_res.endpoint || "deviceManagement/configurationPolicies";
       
       let category = "intune";
@@ -52,8 +54,15 @@ export default function SnapshotPreviewModal({ isOpen, onClose, data }: Snapshot
       else if (['sensitivitylabels', 'informationprotection'].some(x => endpoint_lower.includes(x))) category = 'purview';
       else if (endpoint_lower.includes('sites')) category = 'sharepoint';
 
-      const sanitized_payload = { ...raw_res };
-      ['id', 'version', 'createdDateTime', 'lastModifiedDateTime', '@odata.context', '@odata.nextLink', 'resourceType', 'endpoint'].forEach(k => delete sanitized_payload[k]);
+      let sanitized_payload;
+      if (sourceMode === 'live' && raw_res.payload) {
+        // Live preview already extracts the clean payload inside the "payload" key
+        sanitized_payload = { ...raw_res.payload };
+      } else {
+        // TCM preview has a flat structure
+        sanitized_payload = { ...raw_res };
+        ['id', 'version', 'createdDateTime', 'lastModifiedDateTime', '@odata.context', '@odata.nextLink', 'resourceType', 'endpoint'].forEach(k => delete sanitized_payload[k]);
+      }
 
       try {
         await apiClient.post('/templates', {
@@ -81,7 +90,7 @@ export default function SnapshotPreviewModal({ isOpen, onClose, data }: Snapshot
         
         <div className="flex items-center justify-between p-4 border-b border-border-color">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-text-primary">Vista Previa de Snapshot ({data.length} ítems)</h2>
+            <h2 className="text-lg font-semibold text-text-primary">{title} ({data.length} ítems)</h2>
           </div>
           <button onClick={onClose} className="p-1 text-text-muted hover:text-text-primary transition-colors">
             <X size={20} />
@@ -106,8 +115,8 @@ export default function SnapshotPreviewModal({ isOpen, onClose, data }: Snapshot
                     {selectedIds.has(idx) ? <CheckSquare size={16} className="text-accent-blue" /> : <Square size={16} className="text-text-muted" />}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-text-primary">{item.displayName || item.name || `TCM Item ${idx}`}</div>
-                    <div className="text-xs text-text-muted mt-0.5">{item.resourceType || 'Unknown'}</div>
+                    <div className="font-medium text-text-primary">{item.displayName || item.name || `Item ${idx}`}</div>
+                    <div className="text-xs text-text-muted mt-0.5">{item.resourceType || (sourceMode === 'live' ? 'Live Endpoint' : 'Unknown')}</div>
                   </td>
                   <td className="px-4 py-3 text-text-secondary font-mono text-xs">
                     {item.endpoint || item.resourceType || 'N/A'}

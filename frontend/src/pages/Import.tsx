@@ -423,6 +423,8 @@ export default function Import() {
         isOpen={isPreviewMode} 
         onClose={() => setIsPreviewMode(false)} 
         data={previewData || []} 
+        title={importMode === 'live' ? "Vista Previa de Tenant Activo" : "Vista Previa de Snapshot TCM"}
+        sourceMode={importMode === 'live' ? 'live' : 'tcm'}
       />
     </div>
   );
